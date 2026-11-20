@@ -257,68 +257,151 @@
 % =====================================================================
 \section{Solving the heat equation}
 
-\begin{frame}{Finding the solution: Fourier transform}
-  Let $\hat u(\xi,\tau)=\int_{\mathbb R}u(x,\tau)e^{-i\xi x}\dd x$. Then $\widehat{u_{xx}}=-\xi^2\hat u$, so
+\begin{frame}{Separation of variables on the whole line}{Class notation: heat time $t\leftrightarrow\tau$, diffusivity $a^2=k=1$, initial data $g=u_0$}
+
+  Try $u(x,\tau)=X(x)\,T(\tau)$: \ $XT'=X''T$ \ $\Rightarrow$ \ $\dfrac{T'}{T}=\dfrac{X''}{X}=-\mu^2$.
+  \begin{gather*}
+    T'+\mu^2T=0\ \Rightarrow\ T=Ce^{-\mu^2\tau},\\
+    X''+\mu^2X=0\ \Rightarrow\ X=A\cos\mu x+B\sin\mu x .
+  \end{gather*}
+  \begin{itemize}
+    \item Constant $\le0$: a positive constant $\kappa^2$ gives $X=e^{\pm\kappa x}$, unbounded.
+    \item No boundary conditions, so \emph{every} $\mu\ge0$ is allowed:
+  \end{itemize}
   \[
-    \hat u_\tau=-\xi^2\hat u\quad\Rightarrow\quad\hat u(\xi,\tau)=e^{-\xi^2\tau}\,\hat u_0(\xi).
+    u_\mu=e^{-\mu^2\tau}\big(A(\mu)\cos\mu x+B(\mu)\sin\mu x\big),\quad
+    u=\int_0^\infty u_\mu\dd\mu .
   \]
-  A product of transforms is the transform of a convolution, and
+  {\small On $[-l,l]$ a Fourier series uses frequencies $n\pi/l$, spaced $\pi/l$; as $l\to\infty$ the sum
+  becomes an integral.}
+  \note{This is the method from class. Separating variables gives exponential decay in time and oscillation
+  in space, with higher frequencies decaying faster. Without boundary conditions every frequency is allowed,
+  so we superpose by integrating over mu instead of summing.}
+\end{frame}
+
+\begin{frame}{The Fourier integral}
+  At $\tau=0$ the initial condition is a Fourier integral:
   \[
-    \frac1{2\pi}\int_{\mathbb R}e^{-\xi^2\tau}e^{i\xi x}\dd\xi=\frac{1}{\sqrt{4\pi\tau}}e^{-x^2/4\tau}=:\Phi(x,\tau).
+    g(x)=\int_0^\infty\big(A(\mu)\cos\mu x+B(\mu)\sin\mu x\big)\dd\mu
   \]
-  \begin{block}{Candidate solution}
+  \[
+    \Rightarrow\quad
+    A(\mu)=\frac1\pi\int_{\mathbb R}g(y)\cos\mu y\dd y,\qquad
+    B(\mu)=\frac1\pi\int_{\mathbb R}g(y)\sin\mu y\dd y .
+  \]
+  Substitute, using $\cos\mu y\cos\mu x+\sin\mu y\sin\mu x=\cos\mu(y-x)$, and swap the integrals
+  (allowed for $\tau>0$):
+  \[
+    u(x,\tau)=\frac1\pi\int_{\mathbb R}g(y)\,
+    \underbrace{\int_0^\infty e^{-\mu^2\tau}\cos\mu(y-x)\dd\mu}_{I}\dd y .
+  \]
+  \begin{itemize}
+    \item The inner integral $I$ does not involve $g$.
+    \item Our $g=u_0$ grows, so this step is formal; the theorem below proves the result directly.
+  \end{itemize}
+  \note{The coefficients A and B are the continuous analogue of Fourier coefficients. After substituting
+  them, the two products combine into a single cosine and the problem reduces to one integral I, which
+  depends only on x, y and tau.}
+\end{frame}
+
+\begin{frame}{Evaluating $I$ by a differential equation}
+  Let $z=\mu\sqrt\tau$, $\eta=\dfrac{y-x}{\sqrt\tau}$: \quad
+  $I=\dfrac1{\sqrt\tau}K(\eta)$, \quad $K(\eta)=\displaystyle\int_0^\infty e^{-z^2}\cos(\eta z)\dd z$.
+  \vspace{2pt}
+
+  Differentiate and integrate by parts ($ze^{-z^2}=-\frac12\frac{\dd}{\dd z}e^{-z^2}$):
+  {\small
+  \begin{align*}
+    K'(\eta)&=-\int_0^\infty ze^{-z^2}\sin(\eta z)\dd z\\
+    &=\Big[\tfrac12e^{-z^2}\sin\eta z\Big]_0^\infty-\frac\eta2\int_0^\infty e^{-z^2}\cos\eta z\dd z
+    =-\frac\eta2K(\eta).
+  \end{align*}}
+  So $K=Ce^{-\eta^2/4}$, and $K(0)=\int_0^\infty e^{-z^2}\dd z=\frac{\sqrt\pi}{2}$ gives
+  $K(\eta)=\frac{\sqrt\pi}{2}e^{-\eta^2/4}$.
+  \begin{block}{Fourier--Poisson integral}
     \[
-      u(x,\tau)=(\Phi(\cdot,\tau)*u_0)(x)=\frac1{\sqrt{4\pi\tau}}\int_{\mathbb R}u_0(s)\,e^{-(x-s)^2/4\tau}\dd s
+      I=\frac12\sqrt{\frac\pi\tau}\,e^{-\frac{(y-x)^2}{4\tau}}
+      \quad\Rightarrow\quad
+      u(x,\tau)=\frac{1}{\sqrt{4\pi\tau}}\int_{\mathbb R}g(y)\,e^{-\frac{(x-y)^2}{4\tau}}\dd y
     \]
   \end{block}
-  {\small Our $u_0$ grows exponentially, so this derivation is formal; the next slides prove the result directly.}
-  \note{The Fourier transform turns the PDE into an ODE for each frequency, and high frequencies decay like
-  e to the minus xi squared tau, which is the smoothing. Inverting gives a convolution with a Gaussian.
-  Since our data grow, we use this only to find the formula and then prove it works.}
+  \note{Instead of computing K directly, we find a differential equation for it: differentiating under the
+  integral and integrating by parts gives K prime equals minus eta over two K. Its solution is a Gaussian,
+  and the constant comes from the Gaussian integral at eta equals zero.}
 \end{frame}
 
-\begin{frame}{Proof: $\Phi$ is the fundamental solution}
-  \textbf{(i) $\Phi$ solves the heat equation.} With $\Phi=(4\pi\tau)^{-1/2}e^{-x^2/4\tau}$:
+\begin{frame}{Second derivation: scaling and the fundamental solution}
+  If $u$ solves $u_\tau=u_{xx}$, so does $\lambda u(\lambda x,\lambda^2\tau)$; the quantity $x^2/\tau$ is
+  invariant. Ansatz $u=w(\tau)\,v(z)$, $z=x^2/\tau$:
   \[
-    \Phi_\tau=\Phi\Big(-\frac{1}{2\tau}+\frac{x^2}{4\tau^2}\Big),\qquad
-    \Phi_x=-\frac{x}{2\tau}\Phi,\qquad
-    \Phi_{xx}=\Phi\Big(\frac{x^2}{4\tau^2}-\frac{1}{2\tau}\Big).
+    u_\tau=w'v-wv'\tfrac{x^2}{\tau^2},\qquad u_{xx}=w\Big(4v''\tfrac{x^2}{\tau^2}+2v'\tfrac1\tau\Big)
   \]
-  So $\Phi_\tau=\Phi_{xx}$ for $\tau>0$.
-  \vspace{6pt}
-
-  \textbf{(ii) Unit mass.} With $x=2\sqrt\tau\,z$:
   \[
-    \int_{\mathbb R}\Phi\dd x=\frac{1}{\sqrt\pi}\int_{\mathbb R}e^{-z^2}\dd z=1 .
+    \Rightarrow\quad w'v=w\Big[(4v''+v')\frac{x^2}{\tau^2}+\frac{2v'}{\tau}\Big].
   \]
-
-  \textbf{(iii) Concentration.} For every $\delta>0$, $\displaystyle\int_{|x|>\delta}\Phi\dd x\to0$ as
-  $\tau\to0$: all the mass moves to $x=0$.
-  \note{These three facts say Phi is a heat-equation solution that starts as a point source of unit
-  strength. Everything else follows by superposition: the solution is a weighted average of point sources
-  placed according to the initial data.}
-\end{frame}
-
-\begin{frame}{Theorem: solution of the initial-value problem}
-  \begin{theorem}[Evans, \S2.3]
-    If $u_0$ is continuous with $|u_0(x)|\le Me^{ax^2}$, then $u=\Phi*u_0$ is $C^\infty$ for $0<\tau<1/(4a)$,
-    solves $u_\tau=u_{xx}$, and $u(x,\tau)\to u_0(x_0)$ as $(x,\tau)\to(x_0,0)$.
-  \end{theorem}
-  \textbf{Proof.}
   \begin{itemize}
-    \item \emph{PDE:} differentiate under the integral; all derivatives fall on $\Phi$, and
-      $(\partial_\tau-\partial_{xx})\Phi=0$.
-    \item \emph{Smoothness:} $\Phi$ is $C^\infty$ for $\tau>0$, and its Gaussian decay dominates
-      $e^{ax^2}$, which justifies differentiating under the integral.
-    \item \emph{Initial value:} with $s=x+2\sqrt\tau z$,
-      \[
-        u(x,\tau)-u_0(x)=\frac1{\sqrt\pi}\int e^{-z^2}\big(u_0(x+2\sqrt\tau z)-u_0(x)\big)\dd z\to0
-      \]
-      by continuity of $u_0$ and dominated convergence. \hfill$\square$
+    \item Choose $4v''+v'=0$: \ $v=e^{-z/4}$. Then $w'=-\frac{w}{2\tau}$: \ $w=\tau^{-1/2}$.
+    \item Normalise $\int C\tau^{-1/2}e^{-x^2/4\tau}\dd x=C\sqrt{4\pi}=1$.
   \end{itemize}
-  \note{The proof uses only the three properties of Phi. Smoothness for every positive tau is the
-  mathematical reason the payoff kink melts instantly. The initial condition follows because the Gaussian
-  average shrinks onto the point x.}
+  \begin{block}{Fundamental solution (heat kernel)}
+    \[
+      \Phi(x,\tau)=\frac{1}{\sqrt{4\pi\tau}}e^{-x^2/4\tau}\ (\tau>0),\qquad \Phi=0\ (\tau<0);\qquad
+      u=\Phi(\cdot,\tau)*g .
+    \]
+  \end{block}
+  \note{The same kernel appears from the symmetry of the equation: space scales like the square root of
+  time. Looking for a solution that depends on x squared over tau, with an amplitude in time, gives a
+  Gaussian whose height decays like one over root tau. Normalising the total heat to one fixes the
+  constant.}
+\end{frame}
+
+\begin{frame}{Properties of the heat kernel}
+  \begin{enumerate}
+    \item[(i)] $\Phi>0$ and symmetric: $\Phi(x-y,\tau)=\Phi(y-x,\tau)$.
+    \item[(ii)] $\Phi\in C^\infty$ for $\tau>0$; singular at $(0,0)$.
+    \item[(iii)] $(\partial_\tau-\partial_{xx})\Phi(x-y,\tau)=0$ for every $y$:
+      {\small
+      \[
+        \Phi_\tau=\Phi\Big(\frac{x^2}{4\tau^2}-\frac1{2\tau}\Big),\quad \Phi_x=-\frac{x}{2\tau}\Phi,\quad
+        \Phi_{xx}=\Phi\Big(\frac{x^2}{4\tau^2}-\frac1{2\tau}\Big).
+      \]}
+    \item[(iv)] $\int_{\mathbb R}\Phi(x-y,\tau)\dd y=1$ \ ($y=x+2\sqrt\tau z$:
+      $\frac1{\sqrt\pi}\int e^{-z^2}\dd z=1$).
+    \item[(v)] Derivatives and integrals (superpositions) of $\Phi$ are again solutions.
+  \end{enumerate}
+  \vspace{4pt}
+  As $\tau\to0^+$: $\Phi(0,\tau)\to\infty$ and $\Phi(x,\tau)\to0$ for $x\neq0$, a unit point source.
+  {\small Positivity gives infinite speed: $g\ge0$, $g\not\equiv0$ $\Rightarrow$ $u>0$ everywhere for $\tau>0$.}
+  \note{These are the five properties listed in class. Property three is a direct computation, and property
+  four is the Gaussian integral. Together with five they explain why the convolution with the initial data
+  is a solution.}
+\end{frame}
+
+\begin{frame}{Theorem: the initial-value problem}
+  \begin{theorem}
+    Let $g$ be continuous with $|g(y)|\le Me^{c|y|}$. Then $u=\Phi(\cdot,\tau)*g$ is $C^\infty$ for $\tau>0$,
+    solves $u_\tau=u_{xx}$, and $u(x,\tau)\to g(x_0)$ as $(x,\tau)\to(x_0,0^+)$.
+  \end{theorem}
+  {\small (Class: $g$ bounded; the Gaussian also beats $e^{c|y|}$, which covers our $u_0$.)}
+  \vspace{2pt}
+
+  \textbf{Proof.} \emph{Smooth, solves:} differentiate under the integral; use (ii), (iii), (v).
+  \emph{Initial value:} fix $\varepsilon$, choose $\delta$ with $|g(y)-g(x_0)|<\varepsilon$ for
+  $|y-x_0|<\delta$. By (iv),
+  {\small
+  \[
+    |u(x,\tau)-g(x_0)|\le\underbrace{\int_{|y-x_0|<\delta}\Phi\,|g(y)-g(x_0)|\dd y}_{I\ \le\ \varepsilon}
+    +\underbrace{\int_{|y-x_0|\ge\delta}\Phi\,|g(y)-g(x_0)|\dd y}_{J}.
+  \]}
+  If $|x-x_0|<\delta/2$ and $|y-x_0|\ge\delta$ then $|x-y|\ge\frac12|y-x_0|$, so
+  {\small
+  \[
+    J\le\int_{|y-x_0|\ge\delta}\frac{e^{-|y-x_0|^2/16\tau}}{\sqrt{4\pi\tau}}\big(|g(y)|+|g(x_0)|\big)\dd y
+    \ \xrightarrow{\ \tau\to0\ }\ 0 . \qquad\square
+  \]}
+  \note{This follows the proof from class: split the integral into a part near x0, small by continuity, and
+  a part far away, small because the kernel concentrates. Our initial data grow exponentially rather than
+  being bounded, but the Gaussian factor still wins, so the same proof applies.}
 \end{frame}
 
 \begin{frame}{Smoothing: the kink melts}
@@ -327,27 +410,53 @@
   {\small (a) call value $V$ for several times to expiry \quad (b) the same functions as $u(x,\tau)$}
   \note{Left is the option price as we move away from expiry; right is the same thing in heat coordinates.
   The kinked payoff is an initial temperature profile, and the price today is that temperature after
-  diffusion. This is the picture behind the whole project.}
+  diffusion. By the theorem the solution is smooth for every positive tau.}
+\end{frame}
+
+\begin{frame}{Maximum principle on a bounded domain}
+  Parabolic cylinder $\Omega_T=\Omega\times(0,T]$, \ parabolic boundary
+  $\Gamma_T=\overline{\Omega_T}\setminus\Omega_T$ (bottom and sides).
+  \begin{theorem}[Weak maximum principle]
+    If $u\in C^2_1(\Omega_T)\cap C(\overline{\Omega_T})$ solves $u_\tau=u_{xx}$ in $\Omega_T$, then
+    $\displaystyle\max_{\overline{\Omega_T}}u=\max_{\Gamma_T}u$.
+  \end{theorem}
+  \textbf{Proof.} Let $u^\varepsilon=u-\varepsilon\tau$, so $u^\varepsilon_\tau-u^\varepsilon_{xx}=-\varepsilon<0$.
+  Suppose $u^\varepsilon$ has its maximum at $(x_0,\tau_0)\in\Omega_T$. Then
+  \begin{itemize}
+    \item $u^\varepsilon_{xx}\le0$ (maximum in $x$),
+    \item $u^\varepsilon_\tau=0$ if $\tau_0<T$, and $u^\varepsilon_\tau\ge0$ if $\tau_0=T$,
+  \end{itemize}
+  so $u^\varepsilon_\tau-u^\varepsilon_{xx}\ge0$: a contradiction. Hence
+  \[
+    \max_{\overline{\Omega_T}}u\le\max_{\overline{\Omega_T}}u^\varepsilon+\varepsilon T
+    =\max_{\Gamma_T}u^\varepsilon+\varepsilon T\le\max_{\Gamma_T}u+\varepsilon T\xrightarrow{\varepsilon\to0}\max_{\Gamma_T}u .
+    \quad\square
+  \]
+  \note{The hottest point of the cylinder lies on the parabolic boundary: initially or on the walls, never
+  spontaneously inside or at a later time. Subtracting epsilon tau makes the inequality strict, which gives
+  the contradiction; then we let epsilon go to zero.}
 \end{frame}
 
 \begin{frame}{Uniqueness}
-  \begin{theorem}[Weak maximum principle]
-    If $u_\tau-u_{xx}\le0$ in $U_T=(a,b)\times(0,T_0]$ and $u$ is continuous on $\overline{U_T}$, then
-    $\max_{\overline{U_T}}u=\max_{\Gamma_T}u$ ($\Gamma_T$: bottom and sides).
-  \end{theorem}
-  \textbf{Proof.} Let $w=u+\varepsilon x^2$, so $w_\tau-w_{xx}\le-2\varepsilon<0$. At an interior
-  (or top) maximum $w_\tau\ge0$ and $w_{xx}\le0$, so $w_\tau-w_{xx}\ge0$: a contradiction. Hence
-  $\max u\le\max_{\Gamma_T}u+\varepsilon\max(a^2,b^2)$; let $\varepsilon\to0$. \hfill$\square$
-  \vspace{4pt}
+  \textbf{Bounded interval} ($u=g$ on $\Gamma_T$). Let $w=u-v$ for two solutions; $w=0$ on $\Gamma_T$.
   \begin{itemize}
-    \item \textbf{Bounded interval:} the difference $w$ of two solutions is $0$ on $\Gamma_T$; apply the
-      theorem to $\pm w$ $\Rightarrow$ $w\equiv0$.
-    \item \textbf{Whole line:} unique if $|u|\le Ae^{ax^2}$; Tychonoff's example shows that some growth
-      condition is necessary. Our $u$ grows only like $e^{c|x|}$.
+    \item \emph{Maximum principle:} applied to $w$ and $-w$: $\max w=0=\min w$, so $w\equiv0$.
+    \item \emph{Energy method:} $E(\tau)=\int_\Omega w^2\dd x\ge0$, $E(0)=0$, and
+      \[
+        E'(\tau)=2\int_\Omega ww_\tau\dd x=2\int_\Omega ww_{xx}\dd x=-2\int_\Omega w_x^2\dd x\le0
+      \]
+      (boundary term vanishes since $w=0$ on $\partial\Omega$). So $E\equiv0$ and $w\equiv0$.
   \end{itemize}
-  \note{The maximum principle says heat cannot create a new hottest point inside the domain. Applied to the
-  difference of two solutions it gives uniqueness on an interval. On the whole line we need a growth
-  condition, and our solution satisfies it, so the Black--Scholes price is unique.}
+  \vspace{4pt}
+  \textbf{Whole line.} If $u$ solves the IVP with $u\le Ae^{ax^2}$, then $\sup u=\sup g$. Applied to $\pm w$
+  (with $g=0$): at most one solution in this growth class.
+  \begin{itemize}
+    \item Without a growth condition this fails: nonzero solutions with zero data exist (Tychonoff).
+    \item Our $u$ grows like $e^{c|x|}$: the Black--Scholes price is unique.
+  \end{itemize}
+  \note{These are the two uniqueness proofs from class. The energy E is the squared L2 norm of the
+  difference, which can only decrease under diffusion and starts at zero. On the whole line the maximum
+  principle needs a growth estimate; our solution satisfies it.}
 \end{frame}
 
 \begin{frame}{Solving for the call: complete the square}
@@ -408,15 +517,16 @@
 \begin{frame}{Double-barrier option: separation of variables}
   Knocked out if $S$ hits $B_1=\Bone$ or $B_2=\Btwo$: \ $u(a,\tau)=u(b,\tau)=0$, with
   $a=\ln\frac{B_1}{K}$, $b=\ln\frac{B_2}{K}$, $\ell=b-a$.
-  \vspace{4pt}
 
   $u=X(x)\Theta(\tau)$ $\Rightarrow$ $\dfrac{\Theta'}{\Theta}=\dfrac{X''}{X}=-\lambda$:
   \[
     X''+\lambda X=0,\quad X(a)=X(b)=0 .
   \]
   \begin{itemize}
-    \item $\lambda\le0$: only $X\equiv0$.\quad $\lambda>0$: $\sin(\sqrt\lambda\,\ell)=0$ $\Rightarrow$
-      $\lambda_n=(n\pi/\ell)^2$.
+    \item $\lambda<0$, $\lambda=0$: only $X\equiv0$. \ $\lambda=\mu^2>0$: $X=A\sin\mu(x-a)$,
+      $\sin\mu\ell=0$ $\Rightarrow$ $\lambda_n=(n\pi/\ell)^2$.
+    \item Orthogonality ($\sin\alpha\sin\beta=\frac12[\cos(\alpha-\beta)-\cos(\alpha+\beta)]$):
+      $\int_a^bX_mX_n\dd x=\frac\ell2\delta_{mn}$.
   \end{itemize}
   \begin{block}{Fourier sine series}
     \[

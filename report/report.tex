@@ -146,6 +146,9 @@ coefficient constant, and two further steps remove the lower-order terms entirel
 %=====================================================================
 \section{Reduction to the heat equation}\label{sec:reduction}
 
+The reduction below is the classical one~\cite{wilmott}.
+
+
 \begin{proposition}\label{prop:reduction}
 Let $k=2r/\sigma^2$, $\alpha=-\tfrac12(k-1)$, $\beta=-\tfrac14(k+1)^2$, and set
 \[
@@ -198,62 +201,98 @@ $u_\tau=u_{xx}$ (relative finite-difference residual below $10^{-4}$).
 %=====================================================================
 \section{The heat equation}\label{sec:heat}
 
-\begin{theorem}[Fundamental solution~\cite{evans}]\label{thm:kernel}
-Let $\Phi(x,\tau)=(4\pi\tau)^{-1/2}e^{-x^2/(4\tau)}$ for $\tau>0$. If $u_0$ is continuous and
-$|u_0(x)|\le Me^{a x^2}$, then
+We follow the course notes~\cite{classnotes}. In their notation, $t$ is our $\tau$, the diffusivity is
+$a^2=k=1$ and the initial data are $g=u_0$.
+
+\paragraph{Derivation by the Fourier integral.} Separating variables, $u=X(x)T(\tau)$ gives
+$T'/T=X''/X=-\mu^2$. The constant cannot be positive, since $\kappa^2>0$ would give the unbounded
+$X=e^{\pm\kappa x}$. Hence $T=e^{-\mu^2\tau}$ and $X=A\cos\mu x+B\sin\mu x$. With no boundary conditions every
+$\mu\ge0$ is admissible, so we superpose:
+$u=\int_0^\infty e^{-\mu^2\tau}\big(A(\mu)\cos\mu x+B(\mu)\sin\mu x\big)\dd\mu$. At $\tau=0$ this is the Fourier
+integral of $u_0$, so $A(\mu)=\frac1\pi\int u_0(y)\cos\mu y\dd y$ and $B(\mu)=\frac1\pi\int u_0(y)\sin\mu y\dd y$.
+Substituting, and using $\cos\mu y\cos\mu x+\sin\mu y\sin\mu x=\cos\mu(y-x)$,
+\begin{gather*}
+  u(x,\tau)=\frac1\pi\int_{\mathbb R}u_0(y)\,I\dd y,\qquad
+  I=\int_0^\infty e^{-\mu^2\tau}\cos\mu(y-x)\dd\mu=\frac{K(\eta)}{\sqrt\tau},\\
+  K(\eta)=\int_0^\infty e^{-z^2}\cos\eta z\dd z,
+\end{gather*}
+with $z=\mu\sqrt\tau$ and $\eta=(y-x)/\sqrt\tau$. Differentiating under the integral and integrating by parts gives
+$K'(\eta)=\big[\tfrac12e^{-z^2}\sin\eta z\big]_0^\infty-\tfrac\eta2K(\eta)=-\tfrac\eta2K(\eta)$, so
+$K=\frac{\sqrt\pi}{2}e^{-\eta^2/4}$ (using $K(0)=\int_0^\infty e^{-z^2}\dd z=\frac{\sqrt\pi}2$). Then
+$I=\frac12\sqrt{\pi/\tau}\,e^{-(y-x)^2/(4\tau)}$, and
 \begin{equation}\label{eq:conv}
-  u(x,\tau)=\int_{-\infty}^{\infty}\Phi(x-s,\tau)\,u_0(s)\dd s
-          =\frac{1}{\sqrt{4\pi\tau}}\int_{-\infty}^{\infty}u_0(s)\,e^{-(x-s)^2/(4\tau)}\dd s
+  u(x,\tau)=\int_{\mathbb R}\Phi(x-y,\tau)\,u_0(y)\dd y,\qquad
+  \Phi(x,\tau)=\frac{1}{\sqrt{4\pi\tau}}e^{-x^2/(4\tau)}\quad(\tau>0).
 \end{equation}
-is $C^\infty$ in $x$ and $\tau$ for $0<\tau<1/(4a)$, solves $u_\tau=u_{xx}$, and $u(x,\tau)\to u_0(x_0)$ as
-$(x,\tau)\to(x_0,0)$.
+The same kernel follows from scaling. If $u$ solves $u_\tau=u_{xx}$, so does $\lambda u(\lambda x,\lambda^2\tau)$. The
+ansatz $u=w(\tau)v(z)$, $z=x^2/\tau$, gives $w'v=w\big[(4v''+v')x^2/\tau^2+2v'/\tau\big]$. The choice $4v''+v'=0$
+gives $v=e^{-z/4}$ and then $w'=-w/(2\tau)$, i.e.\ $w=\tau^{-1/2}$. Normalising the total heat to $1$ gives $\Phi$.
+Our $u_0$ is not integrable, so this derivation is formal; \cref{thm:kernel} verifies the result directly.
+
+\paragraph{Properties of $\Phi$.} (i) $\Phi>0$ and $\Phi(x-y,\tau)=\Phi(y-x,\tau)$; (ii) $\Phi\in C^\infty$ for $\tau>0$;
+(iii) $\Phi_\tau=\Phi_{xx}$, since both equal $\Phi\,(\frac{x^2}{4\tau^2}-\frac1{2\tau})$; (iv) $\int\Phi(x-y,\tau)\dd y=1$, by
+$y=x+2\sqrt\tau z$ and $\int e^{-z^2}\dd z=\sqrt\pi$; (v) derivatives and superpositions of $\Phi$ are solutions.
+
+\begin{theorem}[Initial-value problem~\cite{classnotes,evans}]\label{thm:kernel}
+Let $u_0$ be continuous with $|u_0(y)|\le Me^{c|y|}$. Then $u$ defined by~\eqref{eq:conv} is $C^\infty$ for $\tau>0$,
+solves $u_\tau=u_{xx}$, and $u(x,\tau)\to u_0(x_0)$ as $(x,\tau)\to(x_0,0^+)$.
 \end{theorem}
 
-\begin{proof}[Sketch]
-$\Phi_\tau=\Phi_{xx}$ by direct differentiation, and $\int\Phi\dd x=1$. Differentiating under the
-integral sign gives $u_\tau=u_{xx}$. All derivatives fall on the smooth kernel, which is why $u$ is
-smooth for $\tau>0$ even when $u_0$ has a kink. As $\tau\to0$, $\Phi$ concentrates at $s=x$ with unit
-mass, which gives the initial condition; full details are in Evans~\cite[\S2.3]{evans}.
+\begin{proof}
+The notes treat bounded $u_0$; the same argument works here because the Gaussian decay of $\Phi$ dominates
+$e^{c|y|}$. \emph{Smoothness and the PDE:} for $x$ in a compact set and $\tau$ in a compact subset of $(0,\infty)$,
+the $x$- and $\tau$-derivatives of $\Phi(x-y,\tau)u_0(y)$ are bounded by an integrable function of $y$. So we may
+differentiate under the integral, and (ii), (iii) give $u\in C^\infty$ with $u_\tau-u_{xx}=0$.
+\emph{Initial value:} fix $x_0$ and $\varepsilon>0$, and choose $\delta$ with $|u_0(y)-u_0(x_0)|<\varepsilon$ for
+$|y-x_0|<\delta$. By (iv),
+\[
+  |u(x,\tau)-u_0(x_0)|\le\int_{|y-x_0|<\delta}\Phi\,|u_0(y)-u_0(x_0)|\dd y
+  +\int_{|y-x_0|\ge\delta}\Phi\,|u_0(y)-u_0(x_0)|\dd y=:I+J,
+\]
+and $I\le\varepsilon$ by (i), (iv). If $|x-x_0|<\delta/2$ and $|y-x_0|\ge\delta$, then $|x-y|\ge\frac12|y-x_0|$, so
+$J\le(4\pi\tau)^{-1/2}\int_{|y-x_0|\ge\delta}e^{-|y-x_0|^2/(16\tau)}\big(|u_0(y)|+|u_0(x_0)|\big)\dd y\to0$ as $\tau\to0^+$.
+Hence $|u(x,\tau)-u_0(x_0)|\le2\varepsilon$ for $(x,\tau)$ close enough to $(x_0,0)$.
 \end{proof}
 
 \paragraph{Smoothing.} \Cref{thm:kernel} explains \cref{fig:smoothing}: the kinked payoff becomes
-$C^\infty$ at every $\tau>0$, and the information in the data spreads at infinite speed (any $\tau>0$
-sees all of $u_0$). In financial terms, every possible future share price affects today's value.
+$C^\infty$ at every $\tau>0$. By (i), information spreads at infinite speed (any $\tau>0$ sees all of $u_0$). In
+financial terms, every possible future share price affects today's value.
 
-\paragraph{Uniqueness.} On a bounded interval uniqueness follows from the maximum principle.
+\paragraph{Maximum principle and uniqueness.} Let $\Omega=(a,b)$, let $\Omega_T=\Omega\times(0,T]$ be the parabolic
+cylinder, and let $\Gamma_T=\overline{\Omega_T}\setminus\Omega_T$ be its parabolic boundary (bottom and sides).
 
-\begin{theorem}[Weak maximum principle~\cite{evans,nandakumaran}]\label{thm:maxprinciple}
-Let $U_T=(a,b)\times(0,T_0]$ with parabolic boundary $\Gamma_T=\overline{U_T}\setminus U_T$ (bottom
-and sides). If $u\in C^{2,1}(U_T)\cap C(\overline{U_T})$ satisfies $u_\tau-u_{xx}\le0$ in $U_T$,
-then $\max_{\overline{U_T}}u=\max_{\Gamma_T}u$.
+\begin{theorem}[Weak maximum principle~\cite{classnotes,evans,nandakumaran}]\label{thm:maxprinciple}
+If $u\in C^2_1(\Omega_T)\cap C(\overline{\Omega_T})$ solves $u_\tau=u_{xx}$ in $\Omega_T$, then
+$\max_{\overline{\Omega_T}}u=\max_{\Gamma_T}u$.
 \end{theorem}
 
 \begin{proof}
-For $\varepsilon>0$ let $w=u+\varepsilon x^2$, so $w_\tau-w_{xx}\le-2\varepsilon<0$. Suppose $w$ attains its
-maximum over $\overline{U_{T}}$ at a point $(x_0,\tau_0)\in U_T$. Then $w_{xx}(x_0,\tau_0)\le0$, and
-$w_\tau(x_0,\tau_0)\ge0$ (equality if $\tau_0<T_0$, one-sided if $\tau_0=T_0$). Hence
-$w_\tau-w_{xx}\ge0$ there, a contradiction. So $\max_{\overline{U_T}} w=\max_{\Gamma_T} w$, and
-\[
-  \max_{\overline{U_T}}u\le\max_{\overline{U_T}}w=\max_{\Gamma_T}w\le\max_{\Gamma_T}u+\varepsilon\max(a^2,b^2).
-\]
-Let $\varepsilon\to0$; the reverse inequality is trivial.
+For $\varepsilon>0$ let $u^\varepsilon=u-\varepsilon\tau$, so $u^\varepsilon_\tau-u^\varepsilon_{xx}=-\varepsilon<0$. Suppose
+$u^\varepsilon$ attains its maximum over $\overline{\Omega_T}$ at $(x_0,\tau_0)\in\Omega_T$. Then $u^\varepsilon_{xx}\le0$,
+and $u^\varepsilon_\tau=0$ if $\tau_0<T$ or $u^\varepsilon_\tau\ge0$ if $\tau_0=T$. Either way
+$u^\varepsilon_\tau-u^\varepsilon_{xx}\ge0$, a contradiction. Hence
+$\max_{\overline{\Omega_T}}u\le\max_{\overline{\Omega_T}}u^\varepsilon+\varepsilon T=\max_{\Gamma_T}u^\varepsilon+\varepsilon T\le\max_{\Gamma_T}u+\varepsilon T$.
+Let $\varepsilon\to0$; the reverse inequality is trivial since $\Gamma_T\subset\overline{\Omega_T}$.
 \end{proof}
 
 \begin{theorem}[Uniqueness on a bounded interval]\label{thm:unique}
-The problem $u_\tau=u_{xx}$ in $U_T$, with $u$ prescribed on $\Gamma_T$, has at most one solution in
-$C^{2,1}(U_T)\cap C(\overline{U_T})$.
+The problem $u_\tau=u_{xx}$ in $\Omega_T$ with $u$ prescribed on $\Gamma_T$ has at most one solution in
+$C^2_1(\Omega_T)\cap C(\overline{\Omega_T})$.
 \end{theorem}
 
 \begin{proof}
-The difference $w$ of two solutions vanishes on $\Gamma_T$. Applying \cref{thm:maxprinciple} to $w$ and
-to $-w$ gives $w\le0$ and $w\ge0$.
+The difference $w$ of two solutions solves the heat equation with $w=0$ on $\Gamma_T$. \Cref{thm:maxprinciple}
+applied to $w$ and to $-w$ gives $\max w=0=\min w$.
+\emph{Second proof (energy method).} $E(\tau)=\int_\Omega w^2\dd x$ satisfies $E\ge0$, $E(0)=0$ and
+$E'=2\int_\Omega ww_{xx}\dd x=-2\int_\Omega w_x^2\dd x\le0$, where the boundary term vanishes because $w=0$ at
+$x=a,b$. So $E\equiv0$ and $w\equiv0$.
 \end{proof}
 
-On the whole line the situation is more delicate. Uniqueness holds among solutions satisfying a
-growth condition $|u(x,\tau)|\le Ae^{a x^2}$~\cite[\S2.3]{evans}, and Tychonoff's example (a nonzero
-solution with zero initial data, growing faster than any $e^{ax^2}$) shows that \emph{some} growth
-condition is necessary. We state this without proof. Our $u$ grows only like $e^{c|x|}$, so the solution
-of~\eqref{eq:heativp}, and hence the Black--Scholes price, is unique in this class.
+On the whole line, the course notes state the maximum principle under a growth estimate: if $u$ solves the
+initial-value problem on $\mathbb R\times(0,T]$ and $u\le Ae^{ax^2}$, then $\sup u=\sup u_0$. Applied to $\pm w$, this
+gives uniqueness within that growth class. Without some growth condition uniqueness fails (Tychonoff's
+nonzero solution with zero data). We state this without proof, as the notes do. Our $u$ grows only like
+$e^{c|x|}$, so the solution of~\eqref{eq:heativp}, and hence the Black--Scholes price, is unique in this class.
 
 %=====================================================================
 \section{The Black--Scholes formula}\label{sec:formula}
@@ -356,7 +395,8 @@ quadrature with an oscillatory weight (\texttt{barrier.py}).
 \begin{remark}[Uniqueness and a corner]
 \Cref{thm:unique} applies to~\eqref{eq:barrierpde} except for one subtlety: $u_0(b)\neq0$ while
 $u(b,\tau)=0$, so the data are discontinuous at the corner $(b,0)$ and $u\notin C(\overline{U_T})$.
-Uniqueness still holds by an energy argument. For the difference $w$ of two solutions,
+Uniqueness still holds by the energy method of \cref{thm:unique}, which needs only $w(\cdot,\tau)\to0$ in
+$L^2$ rather than continuity at the corner. For the difference $w$ of two solutions,
 $\frac{\dd}{\dd\tau}\int_a^bw^2\dd x=-2\int_a^bw_x^2\dd x\le0$ (integrate by parts using $w(a)=w(b)=0$),
 and $\int_a^b w^2\dd x\to0$ as $\tau\to0$. Hence $w\equiv0$.
 \end{remark}
