@@ -1,0 +1,6 @@
+# Tested with Python 3.12 on macOS (CPU only).
+numpy==2.5.5
+scipy==1.18.1
+matplotlib==3.11.2
+pytest==9.2.0
+torch==2.15.0
