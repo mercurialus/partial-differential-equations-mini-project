@@ -1,6 +1,5 @@
 \documentclass[11pt]{beamer}
 % Classic university style: Madrid theme, 4:3.
-% Trimmed for a 10--15 minute talk (about one minute per slide).
 % Speaker notes: \note{} on each content slide. To show them, add
 %   \setbeameroption{show notes on second screen=right}
 \usetheme{Madrid}
@@ -62,6 +61,13 @@
   laureates' own fund, LTCM, collapsed in 1998, because the real market broke the model's assumptions.}
 \end{frame}
 
+\begin{frame}{Outline}
+  \tableofcontents
+  \note{We first build the Black--Scholes equation from scratch, then classify it and transform it step by
+  step into the heat equation. We solve the heat equation with full proofs and recover the Black--Scholes
+  formula. We end with the limitations of the model.}
+\end{frame}
+
 % =====================================================================
 \section{The Black--Scholes equation}
 
@@ -84,82 +90,179 @@
   \end{columns}
   \note{A call is the right to buy at the strike price at expiry, so at expiry it is worth max(S-K,0).
   Before expiry the future share price is random, as the simulated paths show, so we need a model of the
-  share price to price the option today.}
+  share price to price the option today. These are the default parameters for every number in the talk.}
+\end{frame}
+
+\begin{frame}{Model for the share price}
+  \textbf{Geometric Brownian motion:}
+  \[
+    \dd S=\mu S\dd t+\sigma S\dd W
+  \]
+  \begin{itemize}
+    \item $\mu$: drift, \ $\sigma$: volatility, \ $W$: Brownian motion, \ $(\dd W)^2=\dd t$.
+    \item Bank account grows at constant rate $r$.
+  \end{itemize}
+  \vspace{4pt}
+  \textbf{Itô's lemma} (taken as given): for smooth $V(S,t)$,
+  \[
+    \dd V=V_t\dd t+V_S\dd S+\tfrac12V_{SS}(\dd S)^2,\qquad (\dd S)^2=\sigma^2S^2\dd t,
+  \]
+  \[
+    \Rightarrow\quad \dd V=\Big(V_t+\mu SV_S+\tfrac12\sigma^2S^2V_{SS}\Big)\dd t+\sigma SV_S\dd W .
+  \]
+  \note{The share price grows at rate mu on average with random fluctuations proportional to its level.
+  Itô's lemma is the chain rule for random processes: because dW squared equals dt, the second derivative
+  term survives at first order in dt.}
 \end{frame}
 
 \begin{frame}{Derivation: delta hedging}
-  Share price: $\dd S=\mu S\dd t+\sigma S\dd W$. \ Itô: $\dd V=\big(V_t+\mu SV_S+\tfrac12\sigma^2S^2V_{SS}\big)\dd t+\sigma SV_S\dd W$.
-  \vspace{4pt}
-
   Portfolio: one option, short $\Delta$ shares, \ $\Pi=V-\Delta S$.
+  {\small
+  \[
+    \dd\Pi=\dd V-\Delta\dd S
+    =\Big(V_t+\mu SV_S+\tfrac12\sigma^2S^2V_{SS}-\mu\Delta S\Big)\dd t+\sigma S(V_S-\Delta)\dd W
+  \]}
   \begin{enumerate}
-    \item Choose $\Delta=V_S$: the random term vanishes, and so does $\mu$.
-    \item Riskless $\Rightarrow$ earns bank rate: $\dd\Pi=r(V-SV_S)\dd t$.
+    \item Choose $\Delta=V_S$: random term vanishes, and so does $\mu$.
+    \item Riskless $\Rightarrow$ earns bank rate (no arbitrage): $\dd\Pi=r\Pi\dd t=r(V-SV_S)\dd t$.
+    \item Equate the two expressions for $\dd\Pi$:
   \end{enumerate}
-  \begin{block}{Black--Scholes problem}
+  \begin{block}{Black--Scholes equation}
     \[
-      \underbrace{V_t}_{\text{time decay}}
-      +\underbrace{\tfrac12\sigma^2S^2V_{SS}}_{\text{diffusion}}
-      +\underbrace{rSV_S}_{\text{drift}}
-      -\underbrace{rV}_{\text{discounting}}=0,
-    \]
-    \[
-      V(S,T)=\max(S-K,0),\qquad V(0,t)=0
+      V_t+\tfrac12\sigma^2S^2V_{SS}+rSV_S-rV=0,\qquad S>0,\ t<T
     \]
   \end{block}
+  \note{We hold one option and sell V_S shares. The random terms cancel exactly, and with them the unknown
+  drift mu, which is why the price does not depend on investors' expectations. A riskless portfolio must
+  earn the bank rate, and equating the two expressions gives the Black--Scholes equation.}
+\end{frame}
+
+\begin{frame}{The complete problem}
+  \[
+    \underbrace{V_t}_{\text{time decay}}
+    +\underbrace{\tfrac12\sigma^2S^2V_{SS}}_{\text{diffusion}}
+    +\underbrace{rSV_S}_{\text{drift}}
+    -\underbrace{rV}_{\text{discounting}}=0
+  \]
+  \vspace{4pt}
+  \begin{center}
+  \begin{tabular}{ll}
+    Terminal condition: & $V(S,T)=\max(S-K,0)$\\[4pt]
+    Boundary at $S=0$: & $V(0,t)=0$\\[4pt]
+    Boundary as $S\to\infty$: & $V(S,t)\sim S-Ke^{-r(T-t)}$
+  \end{tabular}
+  \end{center}
+  \vspace{6pt}
   \begin{itemize}
-    \item Data at the \emph{final} time; variable coefficients $S^2$, $S$.
+    \item Data given at the \emph{final} time $T$; solve backwards to today.
+    \item Variable coefficients $S^2$, $S$: not yet a textbook equation.
   \end{itemize}
-  \note{The share price follows geometric Brownian motion and Itô's lemma gives dV. Holding one option and
-  selling V_S shares cancels the randomness, and with it the unknown drift mu. A riskless portfolio must earn
-  the bank rate, which gives the Black--Scholes equation. Data are given at expiry, and the coefficients
-  depend on S.}
+  \note{Each term has a meaning: diffusion from the randomness, drift from interest, and discounting. The
+  data are given at expiry and we need the value today, so we solve backwards in time. The coefficients
+  depend on S, which is what the change of variables will remove.}
 \end{frame}
 
 % =====================================================================
-\section{Reduction to the heat equation}
+\section{Classification and reduction to the heat equation}
 
-\begin{frame}{Classification: Black--Scholes is parabolic}
-  $A\,w_{XX}+2B\,w_{XY}+C\,w_{YY}+\dots=0$: \ type from the sign of $B^2-AC$ (invariant under changes of variables).
-  \vspace{4pt}
-
-  With $(X,Y)=(S,t)$: \ $A=\tfrac12\sigma^2S^2,\ B=C=0\ \Rightarrow\ B^2-AC=0$.
+\begin{frame}{Classification of second-order PDEs}
+  General linear equation in two variables $(X,Y)$:
+  \[
+    A\,w_{XX}+2B\,w_{XY}+C\,w_{YY}+(\text{lower order})=0
+  \]
+  \begin{center}
+  \begin{tabular}{lll}
+    \toprule
+    $B^2-AC>0$ & hyperbolic & wave equation\\
+    $B^2-AC=0$ & parabolic & heat equation\\
+    $B^2-AC<0$ & elliptic & Laplace equation\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
   \begin{itemize}
-    \item \textbf{Parabolic} for every $S>0$.
-    \item \textbf{Degenerate} at $S=0$: PDE becomes $V_t=rV$, forcing $V(0,t)=0$.
-    \item \textbf{Backward}: well posed only for decreasing $t$.
+    \item The type is invariant under smooth invertible changes of variables.
+    \item Characteristics: $A\dd Y^2-2B\dd X\dd Y+C\dd X^2=0$.
+    \item Parabolic canonical form: $w_{\xi\xi}+(\text{lower order})=0$.
+  \end{itemize}
+  \note{This is the classification from Myint-U and McOwen. The sign of the discriminant decides the type,
+  and the type does not change under a change of variables. For parabolic equations only one second
+  derivative survives in canonical form.}
+\end{frame}
+
+\begin{frame}{Black--Scholes is parabolic}
+  With $(X,Y)=(S,t)$, the principal part is $\tfrac12\sigma^2S^2V_{SS}$:
+  \[
+    A=\tfrac12\sigma^2S^2,\quad B=0,\quad C=0\quad\Rightarrow\quad B^2-AC=0 .
+  \]
+  \begin{itemize}
+    \item \textbf{Parabolic} for every $S>0$; characteristics $A\dd t^2=0$: lines $t=$ const.
+    \item \textbf{Degenerate} at $S=0$: $A=B=C=0$, the PDE becomes $V_t=rV$, which forces $V(0,t)=0$.
+    \item \textbf{Backward}: $V_t$ and $V_{SS}$ have the same sign, so it is well posed for decreasing $t$.
   \end{itemize}
   \vspace{4pt}
   Forward in $t$ it is the backward heat equation (ill posed):
   \[
     w_t=-w_{xx},\ \ w(x,0)=\tfrac1n\sin nx\ \Rightarrow\ w=\tfrac1n e^{+n^2t}\sin nx\to\infty .
   \]
-  \note{Only V_SS appears, so the discriminant is zero and the equation is parabolic. At S equals zero it
-  degenerates to an ODE, which supplies the boundary condition. Solving in the wrong time direction is
-  Hadamard ill posed.}
+  \note{Only V_SS appears, so the discriminant is zero. At S equals zero the principal part vanishes and the
+  equation reduces to an ODE, which supplies the boundary condition. Solving in the wrong direction is
+  Hadamard ill posed: arbitrarily small data give arbitrarily large solutions.}
 \end{frame}
 
-\begin{frame}{Three substitutions}
-  \textbf{1. Log price} $x=\ln(S/K)$, $V=Kv$: \quad $SV_S=Kv_x$, \ $S^2V_{SS}=K(v_{xx}-v_x)$.
-  \vspace{4pt}
+\begin{frame}{Step 1: logarithmic price, $S=Ke^x$}
+  Let $x=\ln(S/K)$ and $V(S,t)=K\,v(x,\tau)$. Since $\frac{\dd x}{\dd S}=\frac1S$:
+  \[
+    V_S=\frac{K}{S}v_x\quad\Rightarrow\quad SV_S=K\,v_x .
+  \]
+  Differentiate $SV_S=Kv_x$ once more with respect to $S$:
+  \[
+    V_S+SV_{SS}=\frac{K}{S}v_{xx}\quad\Rightarrow\quad S^2V_{SS}=K\,(v_{xx}-v_x).
+  \]
+  \begin{alertblock}{Effect}
+    $S\partial_S\to\partial_x$: the variable coefficients $S^2$ and $S$ disappear.
+  \end{alertblock}
+  \note{The logarithm turns S times d by dS into d by dx. Differentiating once more produces an extra first
+  derivative term, which is why S squared V_SS becomes v_xx minus v_x. After this step every coefficient is
+  constant.}
+\end{frame}
 
-  \textbf{2. Rescaled time} $\tau=\tfrac12\sigma^2(T-t)$, \ $k=2r/\sigma^2$:
+\begin{frame}{Step 2: rescaled time, $t=T-2\tau/\sigma^2$}
+  $\tau=\tfrac12\sigma^2(T-t)$ is a scaled time to expiry, so $V_t=-\tfrac{\sigma^2}{2}K\,v_\tau$. Substitute:
   \[
-    v_\tau=v_{xx}+(k-1)\,v_x-k\,v,\qquad v(x,0)=\max(e^x-1,0).
+    -\tfrac{\sigma^2}{2}v_\tau+\tfrac{\sigma^2}{2}(v_{xx}-v_x)+r\,v_x-r\,v=0 .
   \]
-  \textbf{3. Exponential factor} $v=e^{\alpha x+\beta\tau}u$:
+  Divide by $\sigma^2/2$ and set $k=2r/\sigma^2$:
+  \begin{block}{Constant-coefficient equation}
+    \[
+      v_\tau=v_{xx}+(k-1)\,v_x-k\,v,\qquad v(x,0)=\max(e^x-1,0)
+    \]
+  \end{block}
+  \begin{itemize}
+    \item $t=T\mapsto\tau=0$: the terminal condition becomes an \emph{initial} condition.
+    \item Only one parameter is left: $k=\kval$.
+  \end{itemize}
+  \note{Reversing and rescaling time turns the terminal-value problem into an ordinary initial-value
+  problem. All four parameters collapse into the single dimensionless number k. What remains are the
+  first- and zeroth-order terms.}
+\end{frame}
+
+\begin{frame}{Step 3: remove the lower-order terms}
+  Try $v=e^{\alpha x+\beta\tau}u$, with $E=e^{\alpha x+\beta\tau}$:
   \[
-    u_\tau=u_{xx}+\big(2\alpha+k-1\big)u_x+\big(\alpha^2+(k-1)\alpha-k-\beta\big)u ,
+    v_\tau=E(\beta u+u_\tau),\quad v_x=E(\alpha u+u_x),\quad v_{xx}=E(\alpha^2u+2\alpha u_x+u_{xx}).
   \]
+  Substitute and divide by $E>0$:
   \[
-    \alpha=-\tfrac{k-1}{2},\qquad \beta=-\tfrac{(k+1)^2}{4}\quad\Rightarrow\quad\text{both extra terms vanish.}
+    u_\tau=u_{xx}+\big(2\alpha+k-1\big)u_x+\big(\alpha^2+(k-1)\alpha-k-\beta\big)u .
   \]
   \begin{itemize}
-    \item Terminal condition $\to$ initial condition; four parameters $\to$ one ($k=\kval$).
+    \item The $u_x$ term vanishes for $\alpha=-\dfrac{k-1}{2}$.
+    \item Then $\alpha^2+(k-1)\alpha-k=\dfrac{(k-1)^2}{4}-\dfrac{(k-1)^2}{2}-k=-\dfrac{(k+1)^2}{4}$,
+    \item so the $u$ term vanishes for $\beta=-\dfrac{(k+1)^2}{4}$.
   \end{itemize}
-  \note{The logarithm removes the variable coefficients. Reversing and rescaling time turns the terminal
-  problem into an initial-value problem with one parameter k. Finally an exponential factor absorbs the
-  drift and the discounting.}
+  \note{The exponential factor is chosen to absorb the drift and the discounting. The first-derivative
+  coefficient fixes alpha, and then the zeroth-order coefficient fixes beta. Here alpha is \alphaval{} and beta
+  is \betaval.}
 \end{frame}
 
 \begin{frame}{Result: the heat equation}
@@ -173,134 +276,265 @@
     \]
   \end{block}
   \begin{itemize}
+    \item Initial data: $u_0=e^{-\alpha x}v(x,0)=e^{\frac{k-1}2x}\max(e^x-1,0)$.
     \item Every step is invertible, so the two problems are equivalent.
+    \item Boundary behaviour: $u\to0$ as $x\to-\infty$; growth only like $e^{c|x|}$.
     \item Checked numerically: $\|u_\tau-u_{xx}\|/\|u_{xx}\|<10^{-4}$.
   \end{itemize}
-  \note{Black--Scholes is exactly the heat equation on the whole line with a kinked initial temperature.
-  Each substitution can be undone, so solving one problem solves the other.}
+  \note{Putting the three steps together, Black--Scholes is exactly the heat equation on the whole line with
+  a kinked initial temperature. Because each substitution can be undone, solving one problem solves the
+  other. Our test suite confirms the transformed price satisfies the heat equation.}
 \end{frame}
 
 % =====================================================================
 \section{Solving the heat equation}
 
-\begin{frame}{Solving on the whole line}
-  \textbf{Separation} $u=X(x)T(\tau)$: \ $u_\mu=e^{-\mu^2\tau}\big(A(\mu)\cos\mu x+B(\mu)\sin\mu x\big)$, every $\mu\ge0$.
+\begin{frame}{Separation of variables on the whole line}{Class notation: heat time $t\leftrightarrow\tau$, diffusivity $a^2=k=1$, initial data $g=u_0$}
+
+  Try $u(x,\tau)=X(x)\,T(\tau)$: \ $XT'=X''T$ \ $\Rightarrow$ \ $\dfrac{T'}{T}=\dfrac{X''}{X}=-\mu^2$.
+  \begin{gather*}
+    T'+\mu^2T=0\ \Rightarrow\ T=Ce^{-\mu^2\tau},\\
+    X''+\mu^2X=0\ \Rightarrow\ X=A\cos\mu x+B\sin\mu x .
+  \end{gather*}
+  \begin{itemize}
+    \item Constant $\le0$: a positive constant $\kappa^2$ gives $X=e^{\pm\kappa x}$, unbounded.
+    \item No boundary conditions, so \emph{every} $\mu\ge0$ is allowed:
+  \end{itemize}
+  \[
+    u_\mu=e^{-\mu^2\tau}\big(A(\mu)\cos\mu x+B(\mu)\sin\mu x\big),\quad
+    u=\int_0^\infty u_\mu\dd\mu .
+  \]
+  {\small On $[-l,l]$ a Fourier series uses frequencies $n\pi/l$, spaced $\pi/l$; as $l\to\infty$ the sum
+  becomes an integral.}
+  \note{This is the method from class. Separating variables gives exponential decay in time and oscillation
+  in space, with higher frequencies decaying faster. Without boundary conditions every frequency is allowed,
+  so we superpose by integrating over mu instead of summing.}
+\end{frame}
+
+\begin{frame}{The Fourier integral}
+  At $\tau=0$ the initial condition is a Fourier integral:
+  \[
+    g(x)=\int_0^\infty\big(A(\mu)\cos\mu x+B(\mu)\sin\mu x\big)\dd\mu
+  \]
+  \[
+    \Rightarrow\quad
+    A(\mu)=\frac1\pi\int_{\mathbb R}g(y)\cos\mu y\dd y,\qquad
+    B(\mu)=\frac1\pi\int_{\mathbb R}g(y)\sin\mu y\dd y .
+  \]
+  Substitute, using $\cos\mu y\cos\mu x+\sin\mu y\sin\mu x=\cos\mu(y-x)$, and swap the integrals
+  (allowed for $\tau>0$):
+  \[
+    u(x,\tau)=\frac1\pi\int_{\mathbb R}g(y)\,
+    \underbrace{\int_0^\infty e^{-\mu^2\tau}\cos\mu(y-x)\dd\mu}_{I}\dd y .
+  \]
+  \begin{itemize}
+    \item The inner integral $I$ does not involve $g$.
+    \item Our $g=u_0$ grows, so this step is formal; the theorem below proves the result directly.
+  \end{itemize}
+  \note{The coefficients A and B are the continuous analogue of Fourier coefficients. After substituting
+  them, the two products combine into a single cosine and the problem reduces to one integral I, which
+  depends only on x, y and tau.}
+\end{frame}
+
+\begin{frame}{Evaluating $I$ by a differential equation}
+  Let $z=\mu\sqrt\tau$, $\eta=\dfrac{y-x}{\sqrt\tau}$: \quad
+  $I=\dfrac1{\sqrt\tau}K(\eta)$, \quad $K(\eta)=\displaystyle\int_0^\infty e^{-z^2}\cos(\eta z)\dd z$.
   \vspace{2pt}
 
-  Fourier integral for $A,B$ and swapping integrals leaves
-  \[
-    K(\eta)=\int_0^\infty e^{-z^2}\cos(\eta z)\dd z,\qquad K'=-\tfrac\eta2K\ \Rightarrow\ K=\tfrac{\sqrt\pi}{2}e^{-\eta^2/4}.
-  \]
-  \begin{block}{Heat kernel and solution}
+  Differentiate and integrate by parts ($ze^{-z^2}=-\frac12\frac{\dd}{\dd z}e^{-z^2}$):
+  {\small
+  \begin{align*}
+    K'(\eta)&=-\int_0^\infty ze^{-z^2}\sin(\eta z)\dd z\\
+    &=\Big[\tfrac12e^{-z^2}\sin\eta z\Big]_0^\infty-\frac\eta2\int_0^\infty e^{-z^2}\cos\eta z\dd z
+    =-\frac\eta2K(\eta).
+  \end{align*}}
+  So $K=Ce^{-\eta^2/4}$, and $K(0)=\int_0^\infty e^{-z^2}\dd z=\frac{\sqrt\pi}{2}$ gives
+  $K(\eta)=\frac{\sqrt\pi}{2}e^{-\eta^2/4}$.
+  \begin{block}{Fourier--Poisson integral}
     \[
-      \Phi(x,\tau)=\frac{1}{\sqrt{4\pi\tau}}e^{-x^2/4\tau},\qquad
-      u(x,\tau)=\int_{\mathbb R}\Phi(x-y,\tau)\,u_0(y)\dd y
+      I=\frac12\sqrt{\frac\pi\tau}\,e^{-\frac{(y-x)^2}{4\tau}}
+      \quad\Rightarrow\quad
+      u(x,\tau)=\frac{1}{\sqrt{4\pi\tau}}\int_{\mathbb R}g(y)\,e^{-\frac{(x-y)^2}{4\tau}}\dd y
     \]
   \end{block}
+  \note{Instead of computing K directly, we find a differential equation for it: differentiating under the
+  integral and integrating by parts gives K prime equals minus eta over two K. Its solution is a Gaussian,
+  and the constant comes from the Gaussian integral at eta equals zero.}
+\end{frame}
+
+\begin{frame}{Second derivation: scaling and the fundamental solution}
+  If $u$ solves $u_\tau=u_{xx}$, so does $\lambda u(\lambda x,\lambda^2\tau)$; the quantity $x^2/\tau$ is
+  invariant. Ansatz $u=w(\tau)\,v(z)$, $z=x^2/\tau$:
+  \[
+    u_\tau=w'v-wv'\tfrac{x^2}{\tau^2},\qquad u_{xx}=w\Big(4v''\tfrac{x^2}{\tau^2}+2v'\tfrac1\tau\Big)
+  \]
+  \[
+    \Rightarrow\quad w'v=w\Big[(4v''+v')\frac{x^2}{\tau^2}+\frac{2v'}{\tau}\Big].
+  \]
   \begin{itemize}
-    \item \textbf{Theorem:} for $|u_0|\le Me^{c|y|}$, $u$ is $C^\infty$, solves the PDE, and $u\to u_0$ as $\tau\to0^+$.
-    \item \textbf{Unique} in the class $|u|\le Ae^{ax^2}$ (maximum principle / energy method).
+    \item Choose $4v''+v'=0$: \ $v=e^{-z/4}$. Then $w'=-\frac{w}{2\tau}$: \ $w=\tau^{-1/2}$.
+    \item Normalise $\int C\tau^{-1/2}e^{-x^2/4\tau}\dd x=C\sqrt{4\pi}=1$.
   \end{itemize}
-  \note{Separation of variables gives exponentially decaying Fourier modes. With no boundary every frequency
-  is allowed, so we integrate. The remaining integral satisfies a simple ODE whose solution is a Gaussian:
-  the heat kernel. The class proofs, splitting the integral near and far, and the maximum principle, give
-  existence and uniqueness for our exponentially growing data.}
+  \begin{block}{Fundamental solution (heat kernel)}
+    \[
+      \Phi(x,\tau)=\frac{1}{\sqrt{4\pi\tau}}e^{-x^2/4\tau}\ (\tau>0),\qquad \Phi=0\ (\tau<0);\qquad
+      u=\Phi(\cdot,\tau)*g .
+    \]
+  \end{block}
+  \note{The same kernel appears from the symmetry of the equation: space scales like the square root of
+  time. Looking for a solution that depends on x squared over tau, with an amplitude in time, gives a
+  Gaussian whose height decays like one over root tau. Normalising the total heat to one fixes the
+  constant.}
+\end{frame}
+
+\begin{frame}{Properties of the heat kernel}
+  \begin{enumerate}
+    \item[(i)] $\Phi>0$ and symmetric: $\Phi(x-y,\tau)=\Phi(y-x,\tau)$.
+    \item[(ii)] $\Phi\in C^\infty$ for $\tau>0$; singular at $(0,0)$.
+    \item[(iii)] $(\partial_\tau-\partial_{xx})\Phi(x-y,\tau)=0$ for every $y$:
+      {\small
+      \[
+        \Phi_\tau=\Phi\Big(\frac{x^2}{4\tau^2}-\frac1{2\tau}\Big),\quad \Phi_x=-\frac{x}{2\tau}\Phi,\quad
+        \Phi_{xx}=\Phi\Big(\frac{x^2}{4\tau^2}-\frac1{2\tau}\Big).
+      \]}
+    \item[(iv)] $\int_{\mathbb R}\Phi(x-y,\tau)\dd y=1$ \ ($y=x+2\sqrt\tau z$:
+      $\frac1{\sqrt\pi}\int e^{-z^2}\dd z=1$).
+    \item[(v)] Derivatives and integrals (superpositions) of $\Phi$ are again solutions.
+  \end{enumerate}
+  \vspace{4pt}
+  As $\tau\to0^+$: $\Phi(0,\tau)\to\infty$ and $\Phi(x,\tau)\to0$ for $x\neq0$, a unit point source.
+  {\small Positivity gives infinite speed: $g\ge0$, $g\not\equiv0$ $\Rightarrow$ $u>0$ everywhere for $\tau>0$.}
+  \note{These are the five properties listed in class. Property three is a direct computation, and property
+  four is the Gaussian integral. Together with five they explain why the convolution with the initial data
+  is a solution.}
+\end{frame}
+
+\begin{frame}{Theorem: the initial-value problem}
+  \begin{theorem}
+    Let $g$ be continuous with $|g(y)|\le Me^{c|y|}$. Then $u=\Phi(\cdot,\tau)*g$ is $C^\infty$ for $\tau>0$,
+    solves $u_\tau=u_{xx}$, and $u(x,\tau)\to g(x_0)$ as $(x,\tau)\to(x_0,0^+)$.
+  \end{theorem}
+  {\small (Class: $g$ bounded; the Gaussian also beats $e^{c|y|}$, which covers our $u_0$.)}
+  \vspace{2pt}
+
+  \textbf{Proof.} \emph{Smooth, solves:} differentiate under the integral; use (ii), (iii), (v).
+  \emph{Initial value:} fix $\varepsilon$, choose $\delta$ with $|g(y)-g(x_0)|<\varepsilon$ for
+  $|y-x_0|<\delta$. By (iv),
+  {\small
+  \[
+    |u(x,\tau)-g(x_0)|\le\underbrace{\int_{|y-x_0|<\delta}\Phi\,|g(y)-g(x_0)|\dd y}_{I\ \le\ \varepsilon}
+    +\underbrace{\int_{|y-x_0|\ge\delta}\Phi\,|g(y)-g(x_0)|\dd y}_{J}.
+  \]}
+  If $|x-x_0|<\delta/2$ and $|y-x_0|\ge\delta$ then $|x-y|\ge\frac12|y-x_0|$, so
+  {\small
+  \[
+    J\le\int_{|y-x_0|\ge\delta}\frac{e^{-|y-x_0|^2/16\tau}}{\sqrt{4\pi\tau}}\big(|g(y)|+|g(x_0)|\big)\dd y
+    \ \xrightarrow{\ \tau\to0\ }\ 0 . \qquad\square
+  \]}
+  \note{This follows the proof from class: split the integral into a part near x0, small by continuity, and
+  a part far away, small because the kernel concentrates. Our initial data grow exponentially rather than
+  being bounded, but the Gaussian factor still wins, so the same proof applies.}
 \end{frame}
 
 \begin{frame}{Smoothing: the kink melts}
   \centering
   \includegraphics[width=\textwidth]{fig_smoothing.pdf}\\[2pt]
   {\small (a) call value $V$ for several times to expiry \quad (b) the same functions as $u(x,\tau)$}
-  \note{The kinked payoff is an initial temperature profile, and the price today is that temperature after
-  diffusion. The solution is smooth for every positive tau.}
+  \note{Left is the option price as we move away from expiry; right is the same thing in heat coordinates.
+  The kinked payoff is an initial temperature profile, and the price today is that temperature after
+  diffusion. By the theorem the solution is smooth for every positive tau.}
+\end{frame}
+
+\begin{frame}{Maximum principle on a bounded domain}
+  Parabolic cylinder $\Omega_T=\Omega\times(0,T]$, \ parabolic boundary
+  $\Gamma_T=\overline{\Omega_T}\setminus\Omega_T$ (bottom and sides).
+  \begin{theorem}[Weak maximum principle]
+    If $u\in C^2_1(\Omega_T)\cap C(\overline{\Omega_T})$ solves $u_\tau=u_{xx}$ in $\Omega_T$, then
+    $\displaystyle\max_{\overline{\Omega_T}}u=\max_{\Gamma_T}u$.
+  \end{theorem}
+  \textbf{Proof.} Let $u^\varepsilon=u-\varepsilon\tau$, so $u^\varepsilon_\tau-u^\varepsilon_{xx}=-\varepsilon<0$.
+  Suppose $u^\varepsilon$ has its maximum at $(x_0,\tau_0)\in\Omega_T$. Then
+  \begin{itemize}
+    \item $u^\varepsilon_{xx}\le0$ (maximum in $x$),
+    \item $u^\varepsilon_\tau=0$ if $\tau_0<T$, and $u^\varepsilon_\tau\ge0$ if $\tau_0=T$,
+  \end{itemize}
+  so $u^\varepsilon_\tau-u^\varepsilon_{xx}\ge0$: a contradiction. Hence
+  \[
+    \max_{\overline{\Omega_T}}u\le\max_{\overline{\Omega_T}}u^\varepsilon+\varepsilon T
+    =\max_{\Gamma_T}u^\varepsilon+\varepsilon T\le\max_{\Gamma_T}u+\varepsilon T\xrightarrow{\varepsilon\to0}\max_{\Gamma_T}u .
+    \quad\square
+  \]
+  \note{The hottest point of the cylinder lies on the parabolic boundary: initially or on the walls, never
+  spontaneously inside or at a later time. Subtracting epsilon tau makes the inequality strict, which gives
+  the contradiction; then we let epsilon go to zero.}
+\end{frame}
+
+\begin{frame}{Uniqueness}
+  \textbf{Bounded interval} ($u=g$ on $\Gamma_T$). Let $w=u-v$ for two solutions; $w=0$ on $\Gamma_T$.
+  \begin{itemize}
+    \item \emph{Maximum principle:} applied to $w$ and $-w$: $\max w=0=\min w$, so $w\equiv0$.
+    \item \emph{Energy method:} $E(\tau)=\int_\Omega w^2\dd x\ge0$, $E(0)=0$, and
+      \[
+        E'(\tau)=2\int_\Omega ww_\tau\dd x=2\int_\Omega ww_{xx}\dd x=-2\int_\Omega w_x^2\dd x\le0
+      \]
+      (boundary term vanishes since $w=0$ on $\partial\Omega$). So $E\equiv0$ and $w\equiv0$.
+  \end{itemize}
+  \vspace{4pt}
+  \textbf{Whole line.} If $u$ solves the IVP with $u\le Ae^{ax^2}$, then $\sup u=\sup g$. Applied to $\pm w$
+  (with $g=0$): at most one solution in this growth class.
+  \begin{itemize}
+    \item Without a growth condition this fails: nonzero solutions with zero data exist (Tychonoff).
+    \item Our $u$ grows like $e^{c|x|}$: the Black--Scholes price is unique.
+  \end{itemize}
+  \note{These are the two uniqueness proofs from class. The energy E is the squared L2 norm of the
+  difference, which can only decrease under diffusion and starts at zero. On the whole line the maximum
+  principle needs a growth estimate; our solution satisfies it.}
+\end{frame}
+
+\begin{frame}{Solving for the call: complete the square}
+  $u_0=0$ for $s<0$, so $u=I_+-I_-$ with
+  \[
+    I_\pm=\frac{1}{\sqrt{4\pi\tau}}\int_0^\infty e^{\frac{k\pm1}{2}s}e^{-(x-s)^2/4\tau}\dd s .
+  \]
+  Substitute $s=x+\sqrt{2\tau}\,y$ (so $\frac{(x-s)^2}{4\tau}=\frac{y^2}{2}$), $m_\pm=\frac{k\pm1}{2}\sqrt{2\tau}$:
+  {\small
+  \[
+    I_\pm=\frac{e^{\frac{k\pm1}{2}x}}{\sqrt{2\pi}}\int_{-x/\sqrt{2\tau}}^\infty e^{-\frac12y^2+m_\pm y}\dd y,\qquad
+    -\tfrac12y^2+m_\pm y=-\tfrac12(y-m_\pm)^2+\tfrac12m_\pm^2 .
+  \]}
+  \begin{block}{Result}
+    \[
+      I_\pm=e^{\frac{k\pm1}{2}x+\frac{(k\pm1)^2}{4}\tau}\,\N(d_\pm),\qquad
+      d_\pm=\frac{x}{\sqrt{2\tau}}+\frac{k\pm1}{2}\sqrt{2\tau}
+    \]
+  \end{block}
+  \note{The payoff is a difference of two exponentials, so the convolution splits into two Gaussian
+  integrals. Completing the square shifts each Gaussian, and the integral becomes the normal distribution
+  function N evaluated at d plus or d minus.}
 \end{frame}
 
 \begin{frame}{Back to prices: the Black--Scholes formula}
-  $u_0=0$ for $s<0$, so $u=I_+-I_-$, and completing the square in each Gaussian integral:
-  \[
-    I_\pm=e^{\frac{k\pm1}{2}x+\frac{(k\pm1)^2}{4}\tau}\,\N(d_\pm),\qquad
-    d_\pm=\frac{x}{\sqrt{2\tau}}+\frac{k\pm1}{2}\sqrt{2\tau}.
-  \]
-  Undo $V=Ke^{\alpha x+\beta\tau}(I_+-I_-)$: the prefactors become $S$ and $Ke^{-r(T-t)}$.
+  Undo the substitution, $V=Ke^{\alpha x+\beta\tau}(I_+-I_-)$:
+  \begin{itemize}
+    \item $I_+$: $\alpha+\frac{k+1}{2}=1$, $\beta+\frac{(k+1)^2}{4}=0$ $\Rightarrow$ prefactor $Ke^x=S$.
+    \item $I_-$: $\alpha+\frac{k-1}{2}=0$, $\beta+\frac{(k-1)^2}{4}=-k$ $\Rightarrow$ prefactor
+      $Ke^{-k\tau}=Ke^{-r(T-t)}$.
+    \item $\sqrt{2\tau}=\sigma\sqrt{T-t}$ turns $d_\pm$ into $d_{1,2}$.
+  \end{itemize}
   \begin{block}{Theorem (Black--Scholes, 1973)}
     \[
       V(S,t)=S\,\N(d_1)-Ke^{-r(T-t)}\N(d_2),\qquad
       d_{1,2}=\frac{\ln\frac SK+(r\pm\frac{\sigma^2}{2})(T-t)}{\sigma\sqrt{T-t}}
     \]
   \end{block}
-  {\small Checks: put--call parity (gap $\le\parityGap$); $V\to\max(S-K,0)$ as $t\to T$.}
-  \note{The payoff is a difference of two exponentials, so the convolution splits into two Gaussian
-  integrals, each giving the normal distribution function. Undoing the substitution, the exponents combine
-  exactly into S and the discounted strike: the Nobel-winning formula, from the heat kernel.}
-\end{frame}
-
-\begin{frame}{Numerical check}
-  \centering
-  \includegraphics[width=\textwidth]{fig_methods.pdf}\\[2pt]
-  {\small $V(100,0)=\priceHundred$. Heat-kernel quadrature agrees to $\errHeatKernel$, finite differences
-  to $\errExplicit$; Monte Carlo ($10^6$ paths) lies inside its 95\% CI.}
-  \note{We price the same option four ways, and all agree with the formula.}
+  {\small Checks: put--call parity (gap $\le\parityGap$); $V\to0$ as $S\to0$; $V\to\max(S-K,0)$ as $t\to T$.}
+  \note{The exponents combine exactly: the first term becomes S, and the second becomes the discounted
+  strike. This is the Black--Scholes formula, derived purely from the heat kernel. The limits and put--call
+  parity check out to machine precision.}
 \end{frame}
 
 % =====================================================================
-\section{Applications}
-
-\begin{frame}{Double-barrier option: Fourier sine series}
-  Knocked out at $B_1=\Bone$ or $B_2=\Btwo$ $\Rightarrow$ $u(a,\tau)=u(b,\tau)=0$, \ $\ell=b-a$.
-  Separation: $\lambda_n=(n\pi/\ell)^2$,
-  {\small\[
-    u=\sum_{n\ge1}c_n\sin\frac{n\pi(x-a)}{\ell}e^{-\lambda_n\tau},\quad
-    c_n=\frac2\ell\int_{\max(a,0)}^b u_0\sin\frac{n\pi(x-a)}{\ell}\dd x .
-  \]}
-  \centering
-  \includegraphics[height=0.45\textheight]{fig_barrier.pdf}\\
-  {\small Matches Crank--Nicolson to $\barDiffMax$; terms needed $N\propto(T-t)^{-1/2}$.}
-  \note{The barriers become zero boundary values on an interval: the classic separation-of-variables setting
-  from class. The series agrees with an independent Crank--Nicolson solver. Near expiry the high modes have
-  not decayed, so more terms are needed.}
-\end{frame}
-
-\begin{frame}{Explicit finite differences}
-  \begin{columns}[c]
-    \begin{column}{0.45\textwidth}
-      {\small
-      \[
-        u_j^{m+1}=u_j^m+\lambda\big(u_{j+1}^m-2u_j^m+u_{j-1}^m\big)
-      \]}
-      $\lambda=\Delta\tau/\Delta x^2$. Von Neumann:
-      \[
-        G=1-4\lambda\sin^2\tfrac{\xi\Delta x}{2}
-      \]
-      \[
-        |G|\le1\ \forall\xi\iff\lambda\le\tfrac12
-      \]
-      Observed order: \textbf{\convOrderMax}; the payoff kink costs nothing.
-    \end{column}
-    \begin{column}{0.55\textwidth}
-      \includegraphics[width=\textwidth]{fig_stability.pdf}
-    \end{column}
-  \end{columns}
-  \note{The worst mode is the sawtooth, which blows up exactly when lambda exceeds one half: the error jumps
-  from \stabErrForty{} at 0.4 to \stabErrFiftyTwo{} at 0.52. Below the limit the scheme is second order.}
-\end{frame}
-
-\begin{frame}{Machine learning: plain network vs PINN}
-  \centering
-  {\small Inputs $(S/K,\,T-t)$, output $V/K$; MLP, \nnDepth{} hidden layers of \nnWidth{} $\tanh$ units.\\
-  PINN loss $=$ data $+\ \|\text{PDE residual}\|^2$ $+$ terminal $+$ boundary}\\[4pt]
-  {\small\begin{tabular}{ccccc}
-    \toprule
-    & \multicolumn{2}{c}{price RMSE} & \multicolumn{2}{c}{mean $|$residual$|$}\\
-    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
-    $N$ & plain & PINN & plain & PINN\\
-    \midrule
-    \TableNNRowsShort
-    \bottomrule
-  \end{tabular}}\\[4pt]
-  \includegraphics[height=0.33\textheight]{fig_nn.pdf}
-  \note{The plain network fits its few labels but violates the PDE in between. The PINN also penalises the
-  PDE residual, and with 20 labels it is about \nnRmseRatioTwenty{} times more accurate.}
-\end{frame}
+\section{Limitations and conclusions}
 
 \begin{frame}{Limitations and ill-posedness}
   \begin{itemize}
@@ -310,21 +544,21 @@
   \centering
   \includegraphics[width=0.95\textwidth]{fig_illposed.pdf}\\[2pt]
   {\small Noise of size $\illEps$ grows to $\illMaxNoisyTwoMilli$ after backward time $0.002$.}
-  \note{The reduction needs constant volatility and rate, which real markets violate. Running the heat
-  equation backwards multiplies mode n by e to the n squared t, so tiny noise explodes almost immediately.}
+  \note{The reduction needs constant volatility and rate; jumps give an integro-differential equation.
+  Running the heat equation backwards multiplies mode n by e to the n squared t, so noise of size one in a
+  million explodes within a few thousandths of a time unit.}
 \end{frame}
 
 \begin{frame}{Conclusions}
   \begin{enumerate}
     \item Black--Scholes is parabolic, degenerate at $S=0$, and a terminal-value problem.
     \item Three substitutions turn it into $u_\tau=u_{xx}$.
-    \item The heat kernel gives the Black--Scholes formula.
-    \item Barrier options give a Fourier sine series.
-    \item Explicit finite differences: stable iff $\lambda\le\frac12$, order 2.
-    \item Adding the PDE to the loss beats adding more data.
+    \item The heat kernel, from the Fourier integral or from scaling, solves it.
+    \item The maximum principle and the energy method make the solution unique.
+    \item Completing the square gives the Black--Scholes formula.
   \end{enumerate}
-  \note{Every result follows from the heat equation. The neural network experiment shows the PDE is useful
-  even when we only want to fit data.}
+  \note{Every result follows from the heat equation: the change of variables, the heat kernel, uniqueness,
+  and the formula itself. The kinked payoff is smoothed instantly, just like heat in a rod.}
 \end{frame}
 
 \begin{frame}{References}
@@ -336,7 +570,6 @@
     \item A.~K.~Nandakumaran, P.~S.~Datti, \emph{Partial Differential Equations}, CUP.
     \item F.~Black, M.~Scholes, J.\ Political Economy 81 (1973).
     \item P.~Wilmott, S.~Howison, J.~Dewynne, \emph{The Mathematics of Financial Derivatives}, CUP (1995).
-    \item M.~Raissi, P.~Perdikaris, G.~E.~Karniadakis, J.\ Comput.\ Phys.\ 378 (2019).
   \end{itemize}
   \vfill
   \centering\Large Thank you! Questions?
