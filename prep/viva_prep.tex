@@ -1,0 +1,576 @@
+\documentclass[11pt]{article}
+% Viva preparation: notation, full derivation, and likely questions from a PDE professor.
+% Build:  cd prep && latexmk -pdf viva_prep.tex
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!50!black]{hyperref}
+\sisetup{exponent-product=\times}
+
+\input{../slides/results.tex}
+\newcommand{\N}{\mathcal N}
+\newcommand{\dd}{\,\mathrm d}
+\newcommand{\R}{\mathbb R}
+
+% Question / answer layout
+\newcounter{qn}[section]
+\renewcommand{\theqn}{\thesection.\arabic{qn}}
+\newcommand{\Q}[1]{\par\medskip\refstepcounter{qn}\noindent\textbf{Q\theqn.\ #1}\par\nopagebreak\smallskip}
+\newcommand{\A}{\noindent\textit{Answer.}\ }
+
+\theoremstyle{definition}
+\newtheorem*{remark}{Remark}
+
+\title{Black--Scholes is the Heat Equation in Disguise\\[4pt]
+\large Viva preparation: notation, full derivation, and likely questions}
+\author{Harshil Goyal \and Amogh Bindal}
+\date{MA5030 Partial Differential Equations}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+% =====================================================================
+\section{Notation: every symbol in the talk}
+
+\subsection*{Financial variables}
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lp{0.72\textwidth}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$S$ & Price of the underlying share (stock) at time $t$; $S>0$. Independent variable of the PDE. \\
+$t$ & Calendar time, $0\le t\le T$. Independent variable of the PDE. \\
+$T$ & Expiry (maturity) date of the option. Default $T=\Tval$ year. \\
+$K$ & Strike price: the fixed price at which the option lets you buy. Default $K=\Kval$. \\
+$V(S,t)$ & Value (fair price) of the option when the share price is $S$ at time $t$. The unknown function. \\
+$\max(S-K,0)$ & Payoff of a European call at expiry, also written $(S-K)^+$. \\
+$r$ & Risk-free interest rate (continuously compounded bank rate). Default $r=\rval$. \\
+$\mu$ & Drift: expected growth rate of the share. Disappears from the final equation. \\
+$\sigma$ & Volatility: size of the random fluctuations of $\ln S$ per $\sqrt{\text{year}}$. Default $\sigma=\sigmaval$. \\
+$W_t$ & Standard Brownian motion (Wiener process): $W_0=0$, independent Gaussian increments, $W_{t+h}-W_t\sim N(0,h)$. \\
+$\Delta$ & Number of shares held in the hedge; chosen as $\Delta=\partial V/\partial S$ (``the delta''). \\
+$\Pi$ & Value of the hedged portfolio $\Pi=V-\Delta S$. \\
+$B_1,B_2$ & Lower and upper barriers of the double-barrier option ($\Bone$, $\Btwo$). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Transformed (heat-equation) variables}
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lp{0.72\textwidth}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$x=\ln(S/K)$ & Log-moneyness: new space variable, $x\in\R$. $S=K$ is $x=0$; $S\to0$ is $x\to-\infty$. \\
+$\tau=\tfrac12\sigma^2(T-t)$ & Scaled time to expiry, dimensionless. $t=T$ is $\tau=0$. \\
+$k=2r/\sigma^2$ & The only parameter left after scaling; here $k=\kval$. \\
+$v(x,\tau)$ & $V=K\,v$: price measured in units of the strike. \\
+$\alpha,\beta$ & Exponents of the factor $e^{\alpha x+\beta\tau}$: $\alpha=-\frac{k-1}{2}=\alphaval$, $\beta=-\frac{(k+1)^2}{4}=\betaval$. \\
+$u(x,\tau)$ & $V=K\,e^{\alpha x+\beta\tau}u$: solves the heat equation $u_\tau=u_{xx}$. \\
+$u_0(x)$ & Initial temperature $u(x,0)=\max\big(e^{\frac{k+1}2x}-e^{\frac{k-1}2x},0\big)$. \\
+$\Phi(x,\tau)$ & Heat kernel (fundamental solution) $\frac{1}{\sqrt{4\pi\tau}}e^{-x^2/4\tau}$. \\
+$\N(d)$ & Standard normal distribution function $\frac{1}{\sqrt{2\pi}}\int_{-\infty}^d e^{-z^2/2}\dd z$. \\
+$d_1,d_2$ & Arguments of $\N$ in the Black--Scholes formula. \\
+$a,b,\ell$ & $a=\ln(B_1/K)$, $b=\ln(B_2/K)$, $\ell=b-a$: barrier interval in $x$. \\
+$\lambda=\Delta\tau/\Delta x^2$ & Mesh ratio of the explicit finite-difference scheme (not the eigenvalue). \\
+$\lambda_n=(n\pi/\ell)^2$ & Eigenvalues of $-X''$ on $[a,b]$ with zero boundary values. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Subscripts denote partial derivatives: $V_t=\partial V/\partial t$, $V_{SS}=\partial^2V/\partial S^2$, etc.
+
+% =====================================================================
+\section{The derivation from start to end}
+
+\subsection{What is being priced}
+A European call gives the holder the \emph{right, not the obligation}, to buy one share for $K$ at time $T$.
+At $T$ you exercise only if $S>K$, gaining $S-K$, so
+\[
+  V(S,T)=\max(S-K,0).
+\]
+The question is the fair value $V(S,t)$ for $t<T$, when the future price is still random.
+
+\subsection{Model for the share price}
+The share follows geometric Brownian motion (GBM)
+\[
+  \dd S=\mu S\dd t+\sigma S\dd W .
+\]
+The return $\dd S/S$ has a deterministic part $\mu\dd t$ and a random part $\sigma\dd W$ with
+$\dd W\sim N(0,\dd t)$. The solution is $S_t=S_0\exp\big((\mu-\tfrac12\sigma^2)t+\sigma W_t\big)$, so
+$S>0$ always and $\ln S$ is normally distributed (lognormal prices).
+
+\subsection{Itô's lemma (the chain rule with noise)}
+Taylor-expand $V(S,t)$:
+\[
+  \dd V=V_t\dd t+V_S\dd S+\tfrac12V_{SS}(\dd S)^2+V_{St}\dd S\dd t+\tfrac12V_{tt}(\dd t)^2+\cdots
+\]
+In ordinary calculus $(\dd S)^2$ is negligible. Here $\dd W$ is of size $\sqrt{\dd t}$, and the rules
+\[
+  (\dd W)^2=\dd t,\qquad \dd W\dd t=0,\qquad (\dd t)^2=0
+\]
+give $(\dd S)^2=\sigma^2S^2(\dd W)^2=\sigma^2S^2\dd t$, which is first order and must be kept. Hence
+\[
+  \dd V=\Big(V_t+\mu SV_S+\tfrac12\sigma^2S^2V_{SS}\Big)\dd t+\sigma SV_S\dd W. \tag{1}
+\]
+
+\subsection{Delta hedging and the PDE}
+Hold one option and sell $\Delta$ shares: $\Pi=V-\Delta S$. Over $\dd t$ (with $\Delta$ held fixed),
+\[
+  \dd\Pi=\dd V-\Delta\dd S
+  =\Big(V_t+\mu SV_S+\tfrac12\sigma^2S^2V_{SS}-\mu\Delta S\Big)\dd t+\sigma S\,(V_S-\Delta)\dd W .
+\]
+Choose $\Delta=V_S$. The $\dd W$ term vanishes, so the portfolio is riskless, and the $\mu$ terms cancel too:
+\[
+  \dd\Pi=\Big(V_t+\tfrac12\sigma^2S^2V_{SS}\Big)\dd t .
+\]
+\textbf{No arbitrage:} a riskless portfolio must earn exactly the bank rate, otherwise one could borrow at
+$r$ and invest in $\Pi$ (or the reverse) for a risk-free profit. So
+$\dd\Pi=r\Pi\dd t=r(V-SV_S)\dd t$. Equating,
+\[
+  \boxed{\;V_t+\tfrac12\sigma^2S^2V_{SS}+rSV_S-rV=0,\qquad S>0,\ t<T.\;} \tag{BS}
+\]
+Meaning of the terms: $V_t$ time decay, $\frac12\sigma^2S^2V_{SS}$ diffusion (randomness),
+$rSV_S$ drift (growth of money), $-rV$ discounting.
+
+\subsection{Terminal and boundary conditions}
+\begin{itemize}[nosep]
+  \item $V(S,T)=\max(S-K,0)$ (terminal condition).
+  \item $S=0$: GBM started at $0$ stays at $0$, so the option is worthless: $V(0,t)=0$. This is not an extra
+    assumption: at $S=0$ (BS) reduces to the ODE $V_t=rV$ with $V(0,T)=0$, so $V(0,t)=0$.
+  \item $S\to\infty$: the option is almost surely exercised, so it behaves like the share minus the discounted
+    strike: $V\sim S-Ke^{-r(T-t)}$.
+\end{itemize}
+
+\subsection{Classification}
+For $A w_{XX}+2Bw_{XY}+Cw_{YY}+\text{(lower order)}=0$ the type is decided by $B^2-AC$
+($>0$ hyperbolic, $=0$ parabolic, $<0$ elliptic), and it is invariant under smooth invertible changes of
+variables. For (BS) with $(X,Y)=(S,t)$: $A=\tfrac12\sigma^2S^2$, $B=C=0$, so $B^2-AC=0$:
+\emph{parabolic} for every $S>0$. Characteristics $A\dd t^2=0$ are the lines $t=\text{const}$.
+At $S=0$ all of $A,B,C$ vanish (\emph{degenerate}). Since $V_t$ and $V_{SS}$ have the same sign
+(compare $u_\tau-u_{xx}=0$ which has opposite signs), it is a \emph{backward} parabolic equation: well posed
+when solved from $t=T$ backwards.
+
+\subsection{Step 1: logarithmic price}
+Put $S=Ke^x$, i.e.\ $x=\ln(S/K)$, and $V(S,t)=K\,v(x,\tau)$. Since $\frac{\dd x}{\dd S}=\frac1S$,
+\[
+  V_S=\frac{K}{S}v_x\ \Rightarrow\ SV_S=Kv_x .
+\]
+Differentiate $SV_S=Kv_x$ with respect to $S$ (product rule on the left, chain rule on the right):
+\[
+  V_S+SV_{SS}=\frac{K}{S}v_{xx}\ \Rightarrow\ S^2V_{SS}=Kv_{xx}-SV_S=K(v_{xx}-v_x).
+\]
+The variable coefficients disappear because $S\partial_S=\partial_x$ (Euler--Cauchy type operator).
+The half-line $S\in(0,\infty)$ becomes the whole line $x\in\R$.
+
+\subsection{Step 2: reverse and rescale time}
+Put $\tau=\tfrac12\sigma^2(T-t)$. Then $\partial\tau/\partial t=-\tfrac12\sigma^2$, so $V_t=-\tfrac12\sigma^2Kv_\tau$.
+Substituting all three derivatives into (BS) and dividing by $K$:
+\[
+  -\tfrac{\sigma^2}{2}v_\tau+\tfrac{\sigma^2}{2}(v_{xx}-v_x)+rv_x-rv=0 .
+\]
+Divide by $\sigma^2/2$ and set $k=2r/\sigma^2$:
+\[
+  v_\tau=v_{xx}+(k-1)v_x-kv,\qquad v(x,0)=\frac{1}{K}\max(Ke^x-K,0)=\max(e^x-1,0).
+\]
+Now $\tau=0$ corresponds to $t=T$: the \emph{terminal} condition has become an \emph{initial} condition, and
+the equation runs forward in $\tau$. Four parameters $(K,r,\sigma,T)$ reduced to one, $k$.
+
+\subsection{Step 3: remove the first- and zeroth-order terms}
+Try $v=e^{\alpha x+\beta\tau}u$ and write $E=e^{\alpha x+\beta\tau}$. Then
+\[
+  v_\tau=E(\beta u+u_\tau),\quad v_x=E(\alpha u+u_x),\quad v_{xx}=E(\alpha^2u+2\alpha u_x+u_{xx}).
+\]
+Substitute and divide by $E>0$:
+\[
+  \beta u+u_\tau=\alpha^2u+2\alpha u_x+u_{xx}+(k-1)(\alpha u+u_x)-ku,
+\]
+\[
+  u_\tau=u_{xx}+(2\alpha+k-1)u_x+\big(\alpha^2+(k-1)\alpha-k-\beta\big)u .
+\]
+\begin{itemize}[nosep]
+  \item $u_x$ term vanishes: $\alpha=-\frac{k-1}{2}$.
+  \item Then $\alpha^2+(k-1)\alpha-k=\frac{(k-1)^2}{4}-\frac{(k-1)^2}{2}-k=-\frac{(k-1)^2+4k}{4}=-\frac{(k+1)^2}{4}$,
+  so the $u$ term vanishes for $\beta=-\frac{(k+1)^2}{4}$.
+\end{itemize}
+Initial data: $u_0(x)=e^{-\alpha x}\max(e^x-1,0)=e^{\frac{k-1}{2}x}\max(e^x-1,0)
+=\max\big(e^{\frac{k+1}{2}x}-e^{\frac{k-1}{2}x},0\big)$.
+
+\begin{remark}
+Equivalent two-move version: a moving frame $y=x+(k-1)\tau$ removes the advection term (Galilean shift), and
+$e^{-k\tau}$ removes the discounting. The single exponential factor does both at once.
+\end{remark}
+
+\subsection{Result}
+\[
+  u_\tau=u_{xx},\quad x\in\R,\ \tau>0,\qquad u(x,0)=u_0(x),\qquad
+  V(S,t)=K\,e^{\alpha x+\beta\tau}u(x,\tau).
+\]
+Each substitution is smooth and invertible, so solving the heat problem is the same as solving (BS).
+
+% ---------------------------------------------------------------------
+\subsection{Solving the heat equation: separation of variables}
+Try $u=X(x)T(\tau)$. Then $XT'=X''T$, so $\frac{T'}{T}=\frac{X''}{X}=$ const.
+\begin{itemize}[nosep]
+  \item Constant $=+\kappa^2>0$: $X=e^{\pm\kappa x}$, unbounded on $\R$: rejected.
+  \item Constant $=-\mu^2\le0$: $T=e^{-\mu^2\tau}$, $X=A\cos\mu x+B\sin\mu x$ (bounded).
+\end{itemize}
+With no boundary conditions every $\mu\ge0$ is allowed, so we superpose with an integral instead of a sum:
+\[
+  u(x,\tau)=\int_0^\infty e^{-\mu^2\tau}\big(A(\mu)\cos\mu x+B(\mu)\sin\mu x\big)\dd\mu .
+\]
+At $\tau=0$ this is the Fourier integral of $g=u_0$, so
+\[
+  A(\mu)=\frac1\pi\int_\R g(y)\cos\mu y\dd y,\qquad B(\mu)=\frac1\pi\int_\R g(y)\sin\mu y\dd y .
+\]
+Substituting and using $\cos\mu y\cos\mu x+\sin\mu y\sin\mu x=\cos\mu(y-x)$, then swapping the order of integration,
+\[
+  u(x,\tau)=\frac1\pi\int_\R g(y)\,I\dd y,\qquad I=\int_0^\infty e^{-\mu^2\tau}\cos\mu(y-x)\dd\mu .
+\]
+
+\subsection{Evaluating $I$}
+Let $z=\mu\sqrt\tau$, $\eta=(y-x)/\sqrt\tau$, so $I=\frac{1}{\sqrt\tau}K(\eta)$ with
+$K(\eta)=\int_0^\infty e^{-z^2}\cos\eta z\dd z$. Differentiate under the integral and integrate by parts with
+$ze^{-z^2}=-\frac12\frac{\dd}{\dd z}e^{-z^2}$:
+\[
+  K'(\eta)=-\int_0^\infty ze^{-z^2}\sin\eta z\dd z
+  =\Big[\tfrac12e^{-z^2}\sin\eta z\Big]_0^\infty-\frac\eta2\int_0^\infty e^{-z^2}\cos\eta z\dd z
+  =-\frac\eta2K(\eta).
+\]
+So $K(\eta)=K(0)e^{-\eta^2/4}$ with $K(0)=\int_0^\infty e^{-z^2}\dd z=\frac{\sqrt\pi}{2}$. Therefore
+$I=\frac12\sqrt{\frac{\pi}{\tau}}\,e^{-(y-x)^2/4\tau}$ and
+\[
+  \boxed{\;u(x,\tau)=\int_\R\Phi(x-y,\tau)\,u_0(y)\dd y,\qquad \Phi(x,\tau)=\frac{1}{\sqrt{4\pi\tau}}e^{-x^2/4\tau}.\;}
+\]
+(Second route, by scaling: $u_\tau=u_{xx}$ is invariant under $x\to\lambda x$, $\tau\to\lambda^2\tau$, so look
+for $u=\tau^{-1/2}v(x^2/\tau)$; this gives $v=e^{-z/4}$ and the same $\Phi$ after normalising
+$\int\Phi\dd x=1$.)
+
+\paragraph{Properties of $\Phi$.} $\Phi>0$; smooth for $\tau>0$; solves the heat equation; $\int_\R\Phi\dd x=1$;
+as $\tau\to0^+$ it concentrates at $x=0$ (it tends to the Dirac delta).
+
+\paragraph{Theorem (existence).} If $u_0$ is continuous with $|u_0(y)|\le Me^{c|y|}$, then $u=\Phi*u_0$ is
+$C^\infty$ for $\tau>0$, solves $u_\tau=u_{xx}$, and $u(x,\tau)\to u_0(x_0)$ as $(x,\tau)\to(x_0,0^+)$.
+\emph{Proof idea:} differentiate under the integral (Gaussian decay dominates $e^{c|y|}$); for the initial
+value, split $\int\Phi\,|u_0(y)-u_0(x_0)|\dd y$ into $|y-x_0|<\delta$ (small by continuity, since $\int\Phi=1$)
+and $|y-x_0|\ge\delta$ (small because $\Phi\to0$ uniformly away from $x$).
+
+\paragraph{Uniqueness.} Among solutions with $|u|\le Ae^{ax^2}$ the solution is unique (maximum principle on
+the whole line). Our $u$ grows only like $e^{c|x|}$, so the price is unique.
+
+\subsection{Computing the convolution}\label{sec:conv}
+Since $u_0(s)=0$ for $s<0$,
+\[
+  u=I_+-I_-,\qquad I_\pm=\frac{1}{\sqrt{4\pi\tau}}\int_0^\infty e^{a_\pm s}e^{-(x-s)^2/4\tau}\dd s,\quad a_\pm=\tfrac{k\pm1}{2}.
+\]
+Substitute $s=x+\sqrt{2\tau}\,y$: $\dd s=\sqrt{2\tau}\dd y$, $\frac{(x-s)^2}{4\tau}=\frac{y^2}{2}$, the lower limit
+$s=0$ becomes $y=-x/\sqrt{2\tau}$, and $\frac{\sqrt{2\tau}}{\sqrt{4\pi\tau}}=\frac{1}{\sqrt{2\pi}}$. With
+$m_\pm=a_\pm\sqrt{2\tau}$,
+\[
+  I_\pm=\frac{e^{a_\pm x}}{\sqrt{2\pi}}\int_{-x/\sqrt{2\tau}}^\infty e^{-\frac12y^2+m_\pm y}\dd y .
+\]
+Complete the square: $-\frac12y^2+m y=-\frac12(y-m)^2+\frac12m^2$. With $z=y-m$ and the symmetry of the
+Gaussian,
+\[
+  I_\pm=e^{a_\pm x+\frac12m_\pm^2}\,\frac{1}{\sqrt{2\pi}}\int_{-d_\pm}^\infty e^{-z^2/2}\dd z
+  =e^{a_\pm x+a_\pm^2\tau}\,\N(d_\pm),\qquad d_\pm=\frac{x}{\sqrt{2\tau}}+a_\pm\sqrt{2\tau}.
+\]
+
+\subsection{Back to the original variables}
+$V=Ke^{\alpha x+\beta\tau}(I_+-I_-)$. Collect the exponents:
+\begin{itemize}[nosep]
+  \item $I_+$: $\alpha+a_+=-\frac{k-1}2+\frac{k+1}2=1$ and $\beta+a_+^2=0$, so the prefactor is $Ke^x=S$.
+  \item $I_-$: $\alpha+a_-=0$ and $\beta+a_-^2=\frac{(k-1)^2-(k+1)^2}{4}=-k$, so the prefactor is
+    $Ke^{-k\tau}=Ke^{-r(T-t)}$ because $k\tau=\frac{2r}{\sigma^2}\cdot\frac{\sigma^2}{2}(T-t)=r(T-t)$.
+  \item $\sqrt{2\tau}=\sigma\sqrt{T-t}$ and $x=\ln(S/K)$, so
+    $d_\pm=\frac{\ln(S/K)}{\sigma\sqrt{T-t}}+\big(\frac{r}{\sigma^2}\pm\frac12\big)\sigma\sqrt{T-t}$.
+\end{itemize}
+\[
+  \boxed{\;V(S,t)=S\,\N(d_1)-Ke^{-r(T-t)}\N(d_2),\qquad
+  d_{1,2}=\frac{\ln\frac SK+\big(r\pm\frac{\sigma^2}{2}\big)(T-t)}{\sigma\sqrt{T-t}}.\;}
+\]
+For the default parameters $V(100,0)=\priceHundred$.
+
+\subsection{Double barrier: Fourier sine series}
+If the option dies when $S$ hits $B_1$ or $B_2$, then $u(a,\tau)=u(b,\tau)=0$ on the finite interval $[a,b]$.
+Separation gives $X''+\lambda X=0$, $X(a)=X(b)=0$: $\lambda\le0$ gives only $X\equiv0$, and
+$\lambda_n=(n\pi/\ell)^2$, $X_n=\sin\frac{n\pi(x-a)}{\ell}$. Orthogonality
+$\int_a^bX_mX_n\dd x=\frac\ell2\delta_{mn}$ gives
+\[
+  u=\sum_{n\ge1}c_n X_n(x)e^{-\lambda_n\tau},\qquad c_n=\frac2\ell\int_{\max(a,0)}^bu_0(x)X_n(x)\dd x .
+\]
+
+\subsection{Explicit finite differences}
+$u_j^{m+1}=u_j^m+\lambda(u_{j+1}^m-2u_j^m+u_{j-1}^m)$ with $\lambda=\Delta\tau/\Delta x^2$. Inserting the Fourier mode
+$u_j^m=G^me^{i\xi j\Delta x}$ gives the amplification factor $G=1-4\lambda\sin^2\frac{\xi\Delta x}{2}\in[1-4\lambda,1]$,
+and $|G|\le1$ for all $\xi$ iff $1-4\lambda\ge-1$, i.e.\ $\lambda\le\frac12$. The truncation error is
+$O(\Delta\tau+\Delta x^2)=O(\Delta x^2)$ at fixed $\lambda$: second order in space.
+
+% =====================================================================
+\section{Likely questions and answers}
+
+\subsection{Modelling and the derivation}
+
+\Q{What exactly is $V$? Is it a function or a random variable?}
+\A $V(S,t)$ is a deterministic function of two real variables. The randomness is in $S_t$; the option's
+value at time $t$ is the random number $V(S_t,t)$, but $V$ itself is an ordinary function solving a PDE.
+
+\Q{Why does $\mu$ not appear in the equation? Surely a share expected to rise makes the call worth more.}
+\A With $\Delta=V_S$ the $\mu$ terms cancel exactly. The option can be replicated by trading the share and
+the bank account, so its price is the cost of replication, which does not depend on anyone's view of the
+drift. The expected growth is already reflected in today's share price $S$.
+
+\Q{Why must the riskless portfolio earn exactly $r$?}
+\A No arbitrage. If it earned more than $r$, borrow at $r$, buy $\Pi$ and pocket a riskless profit; if less,
+short $\Pi$ and lend at $r$. Either way prices would adjust until the return is $r$.
+
+\Q{You held $\Delta$ fixed over $\dd t$ even though $\Delta=V_S$ changes. Is that legitimate?}
+\A It is the self-financing condition: $\Delta$ is set at the start of each interval and the portfolio
+changes only through price moves. A rigorous version builds a self-financing replicating portfolio and
+uses the martingale representation theorem; it gives the same PDE.
+
+\Q{What is Itô's lemma, and why is there an extra term compared with the ordinary chain rule?}
+\A It is the chain rule for functions of a diffusion. Brownian increments are of size $\sqrt{\dd t}$, so
+$(\dd W)^2=\dd t$ is first order. The second-order Taylor term $\frac12V_{SS}(\dd S)^2=\frac12\sigma^2S^2V_{SS}\dd t$
+survives. That term is the diffusion term of the PDE.
+
+\Q{Why geometric Brownian motion and not $\dd S=\mu\dd t+\sigma\dd W$?}
+\A GBM keeps $S>0$ and makes returns, not absolute changes, scale-free. Arithmetic Brownian motion allows
+negative prices. GBM is also what makes the coefficients $S^2$ and $S$ appear, which the logarithm removes.
+
+\Q{Is the Black--Scholes equation linear? What order?}
+\A Linear, second order in $S$, first order in $t$, with variable coefficients. Linearity is why
+superposition works (e.g.\ the payoff splits into two exponentials) and why put--call parity holds.
+
+\Q{Derive put--call parity from the PDE.}
+\A Let $C,P$ be the call and put prices. $W=C-P$ solves (BS) with terminal data
+$\max(S-K,0)-\max(K-S,0)=S-K$. The function $S-Ke^{-r(T-t)}$ solves (BS) (check: $V_t=-rKe^{-r(T-t)}$,
+$rSV_S-rV=rKe^{-r(T-t)}$, $V_{SS}=0$) with the same terminal data. By uniqueness,
+$C-P=S-Ke^{-r(T-t)}$. Numerically our gap is $\le\parityGap$.
+
+\Q{Where does the boundary condition at $S=0$ come from? Do you need to impose it?}
+\A No. At $S=0$ the diffusion and drift coefficients both vanish, so (BS) becomes $V_t=rV$ with
+$V(0,T)=0$, forcing $V(0,t)=0$. Financially: a share at price $0$ stays there, so the call is worthless.
+This is typical of degenerate equations: the degeneracy replaces a boundary condition.
+
+\Q{Why $V\sim S-Ke^{-r(T-t)}$ as $S\to\infty$?}
+\A For very large $S$ the option is almost surely exercised, so it is equivalent to receiving the share
+and paying $K$ at $T$, worth $S-Ke^{-r(T-t)}$ today. After the change of variables this is the growth
+condition at $x\to+\infty$.
+
+\subsection{Classification and well-posedness}
+
+\Q{Classify the equation. Is it parabolic everywhere?}
+\A $A=\frac12\sigma^2S^2$, $B=C=0$, so $B^2-AC=0$: parabolic for all $S>0$; degenerate at $S=0$ where $A=0$.
+Characteristics are $t=$ const.
+
+\Q{What does ``backward parabolic'' mean, and what goes wrong if you solve forward in $t$?}
+\A Writing it as $V_t=-\frac12\sigma^2S^2V_{SS}+\dots$, the diffusion has the ``wrong'' sign for forward
+time; forward in $t$ it behaves like $w_t=-w_{xx}$. Hadamard's example: $w(x,0)=\frac1n\sin nx\to0$ but
+$w=\frac1ne^{n^2t}\sin nx\to\infty$ for any $t>0$: no continuous dependence on data. That is why the data
+are given at $T$ and we solve towards today. Our experiment: noise of $\illEps$ grows to
+$\illMaxNoisyTwoMilli$ after time $0.002$.
+
+\Q{Is the problem well posed in the sense of Hadamard?}
+\A Yes, backwards in $t$ (forward in $\tau$), within the growth class $|u|\le Ae^{ax^2}$: existence (heat
+kernel), uniqueness (maximum principle), and continuous dependence (maximum principle gives
+$\sup|u_1-u_2|\le\sup|g_1-g_2|$ for bounded data).
+
+\Q{The type is invariant under changes of variables. Show it.}
+\A Under $(X,Y)\to(\xi,\eta)$ with Jacobian $J$, the new coefficients satisfy
+$B'^2-A'C'=(\det J)^2(B^2-AC)$. Since $\det J\ne0$ for an invertible map, the sign is preserved.
+
+\Q{What happens if $\sigma\to0$?}
+\A The second-order term disappears and (BS) becomes the first-order hyperbolic transport equation
+$V_t+rSV_S-rV=0$, solved by characteristics $S(t)=S_0e^{rt}$. The price becomes
+$\max(S-Ke^{-r(T-t)},0)$, which keeps the kink: no smoothing without diffusion.
+
+\subsection{The change of variables}
+
+\Q{Why the logarithm?}
+\A Because $S\partial_S$ and $S^2\partial_{SS}$ are Euler--Cauchy operators, and $x=\ln S$ turns
+$S\partial_S$ into $\partial_x$, giving constant coefficients. It also maps $(0,\infty)$ to $\R$, so the
+problem lives on the whole line.
+
+\Q{Show the computation $S^2V_{SS}=K(v_{xx}-v_x)$.}
+\A $V_S=\frac{K}{S}v_x$. Differentiating again, $V_{SS}=-\frac{K}{S^2}v_x+\frac{K}{S}\cdot\frac1Sv_{xx}$, so
+$S^2V_{SS}=K(v_{xx}-v_x)$. The extra $-v_x$ comes from differentiating $1/S$.
+
+\Q{Why is time reversed and scaled by $\sigma^2/2$?}
+\A Reversing ($T-t$) turns the terminal condition into an initial condition and the backward equation into a
+forward one. Scaling by $\sigma^2/2$ makes the coefficient of $v_{xx}$ exactly $1$ and $\tau$ dimensionless.
+
+\Q{What is the meaning of $k=2r/\sigma^2$?}
+\A The ratio of interest-rate drift to diffusion strength; it is the only parameter left. Here $k=\kval$.
+If $k=1$ the first-order term $(k-1)v_x$ is already absent.
+
+\Q{How did you choose $\alpha$ and $\beta$?}
+\A Substitute $v=e^{\alpha x+\beta\tau}u$ and require the coefficient of $u_x$ ($2\alpha+k-1$) and of $u$
+($\alpha^2+(k-1)\alpha-k-\beta$) to vanish. Two equations, two unknowns:
+$\alpha=-\frac{k-1}{2}=\alphaval$, $\beta=-\frac{(k+1)^2}{4}=\betaval$.
+
+\Q{Does this trick work for any linear constant-coefficient parabolic equation?}
+\A Yes: $u_\tau=u_{xx}+bu_x+cu$ becomes the heat equation with $\alpha=-b/2$, $\beta=c-b^2/4$. It fails if
+coefficients depend on $x$ or $\tau$ in a general way (e.g.\ local volatility $\sigma(S,t)$).
+
+\Q{Are the two problems really equivalent?}
+\A Each map is a smooth bijection: $S\leftrightarrow x$, $t\leftrightarrow\tau$, and multiplication by
+$Ke^{\alpha x+\beta\tau}>0$. A solution of one problem gives a solution of the other, and uniqueness
+transfers.
+
+\subsection{Solving the heat equation}
+
+\Q{In separation of variables, why must the separation constant be negative?}
+\A A positive constant gives $X=e^{\pm\kappa x}$, unbounded as $|x|\to\infty$ (and $T$ grows in time). Zero
+gives $X=A+Bx$; only the constant is bounded, which is the $\mu=0$ case. So we take $-\mu^2$.
+
+\Q{Why an integral over $\mu$ rather than a sum?}
+\A On a bounded interval the boundary conditions select discrete frequencies $n\pi/l$. On $\R$ there are
+none, so all $\mu\ge0$ are admissible; as $l\to\infty$ the spacing $\pi/l\to0$ and the Fourier series becomes
+the Fourier integral.
+
+\Q{Our $u_0$ grows exponentially, so its Fourier integral does not exist. Is the derivation valid?}
+\A The Fourier step is formal for our data. But the final formula $u=\Phi*u_0$ is then proved directly
+(existence theorem): the Gaussian decay $e^{-y^2/4\tau}$ beats $e^{c|y|}$, so the convolution converges,
+solves the equation and attains the initial data.
+
+\Q{Why can you swap the order of integration?}
+\A For $\tau>0$ and integrable $g$, $|e^{-\mu^2\tau}g(y)|$ is integrable over $(\mu,y)$, so Fubini applies.
+For growing data, see the previous answer.
+
+\Q{Derive the heat kernel another way.}
+\A (i) Scaling/similarity: $u=\tau^{-1/2}v(x^2/\tau)$ gives $4v''+v'=0$, so $v=e^{-z/4}$. (ii) Fourier
+transform: $\hat u_\tau=-\xi^2\hat u$, so $\hat u=e^{-\xi^2\tau}\hat g$, and the inverse transform of a Gaussian is
+a Gaussian. (iii) Probabilistically, $\Phi$ is the density of $\sqrt2\,W_\tau$.
+
+\Q{Why the factor $1/\sqrt{4\pi\tau}$?}
+\A So that $\int_\R\Phi\dd x=1$ for every $\tau$ (conservation of heat). With $x=2\sqrt\tau z$,
+$\int e^{-x^2/4\tau}\dd x=2\sqrt\tau\sqrt\pi$.
+
+\Q{What does $\Phi$ look like as $\tau\to0^+$?}
+\A Height $\to\infty$ at $x=0$, value $\to0$ elsewhere, total mass $1$: it tends to the Dirac delta. That is why
+$\Phi*g\to g$.
+
+\Q{Is the solution of the heat equation on $\R$ unique?}
+\A Not without a growth condition: Tychonoff constructed a nonzero solution with zero initial data that
+grows faster than $e^{ax^2}$. In the class $|u|\le Ae^{ax^2}$ it is unique by the maximum principle. Our
+solution grows like $e^{c|x|}$, so it is unique.
+
+\Q{State and prove the weak maximum principle.}
+\A On $\Omega_T=\Omega\times(0,T]$, a solution attains its maximum on the parabolic boundary (bottom and sides).
+Proof: $u^\varepsilon=u-\varepsilon\tau$ satisfies $u^\varepsilon_\tau-u^\varepsilon_{xx}=-\varepsilon<0$. At an interior or top maximum
+$u^\varepsilon_{xx}\le0$ and $u^\varepsilon_\tau\ge0$, so $u^\varepsilon_\tau-u^\varepsilon_{xx}\ge0$, a contradiction. Let
+$\varepsilon\to0$.
+
+\Q{Prove uniqueness on a bounded interval by the energy method.}
+\A For the difference $w$ of two solutions, $E(\tau)=\int w^2\dd x$ satisfies $E'=2\int ww_{xx}\dd x=-2\int w_x^2\dd x\le0$
+(boundary term vanishes since $w=0$ there). $E(0)=0$ and $E\ge0$, so $E\equiv0$.
+
+\Q{What does the maximum principle say about option prices?}
+\A Comparison: if two payoffs satisfy $g_1\le g_2$, their prices satisfy $V_1\le V_2$ (the factor
+$Ke^{\alpha x+\beta\tau}$ is positive). In particular payoff $\ge0$ implies price $\ge0$, and $V\le S$.
+
+\Q{What is ``infinite speed of propagation'' here, and what does it mean financially?}
+\A Since $\Phi>0$ everywhere, $u(x,\tau)>0$ for all $x$ as soon as $\tau>0$, even though $u_0=0$ for $x<0$. A call
+on a share far below the strike is still worth something: there is always some probability of finishing in
+the money.
+
+\Q{Why is the price smooth although the payoff has a kink?}
+\A Heat-equation smoothing: $\Phi*u_0$ is $C^\infty$ for $\tau>0$. The kink at $S=K$ only exists at $t=T$. As
+$t\to T$ the second derivative (``Gamma'') near $S=K$ blows up like $(T-t)^{-1/2}$.
+
+\Q{Walk us through completing the square.}
+\A See Section~\ref{sec:conv}. The key steps are the substitution $s=x+\sqrt{2\tau}\,y$ that makes the exponent
+$-y^2/2$, then $-\frac12y^2+my=-\frac12(y-m)^2+\frac12m^2$, and the remaining integral is a normal
+probability $\N(d_\pm)$.
+
+\Q{Is there a probabilistic interpretation of the formula?}
+\A Feynman--Kac: $V(S,t)=e^{-r(T-t)}\mathbb E^{Q}[\max(S_T-K,0)\mid S_t=S]$, where under the risk-neutral
+measure $Q$ the drift $\mu$ is replaced by $r$. $\N(d_2)$ is the risk-neutral probability of exercise, and
+$\N(d_1)$ is the hedge ratio $\Delta=V_S$. The heat kernel is the transition density of Brownian motion.
+Our Monte Carlo check uses exactly this expectation.
+
+\subsection{Barrier option, numerics and neural networks}
+
+\Q{Why does the barrier problem give a sine series?}
+\A Knock-out at $B_1,B_2$ means $V=0$ there, so $u(a,\tau)=u(b,\tau)=0$: Dirichlet conditions on a finite
+interval. The Sturm--Liouville problem $X''+\lambda X=0$, $X(a)=X(b)=0$ has eigenfunctions
+$\sin\frac{n\pi(x-a)}{\ell}$.
+
+\Q{The initial data is nonzero at the upper barrier $x=b$ but the boundary value is $0$. Is that a problem?}
+\A The data are incompatible at the corner $(b,0)$. The sine series converges in $L^2$ at $\tau=0$ (with Gibbs
+oscillations near $b$), but for every $\tau>0$ the factor $e^{-\lambda_n\tau}$ makes the series converge rapidly and
+the solution is smooth inside.
+
+\Q{Why are more terms needed close to expiry?}
+\A Mode $n$ is damped by $e^{-(n\pi/\ell)^2\tau}$. For accuracy $\epsilon$ we need $(N\pi/\ell)^2\tau\gtrsim\ln(1/\epsilon)$,
+so $N\propto\tau^{-1/2}\propto(T-t)^{-1/2}$.
+
+\Q{Derive the stability condition of the explicit scheme.}
+\A Von Neumann: $u_j^m=G^me^{i\xi j\Delta x}$ gives $G=1-4\lambda\sin^2\frac{\xi\Delta x}{2}$. The worst mode is the
+sawtooth $\xi\Delta x=\pi$, $G=1-4\lambda$. $|G|\le1$ iff $\lambda\le\frac12$. Above that the sawtooth grows
+geometrically: error $\stabErrForty$ at $\lambda=0.4$ but $\stabErrFiftyTwo$ at $\lambda=0.52$.
+
+\Q{Why is Crank--Nicolson stable for every $\lambda$?}
+\A Its amplification factor is $G=\frac{1-2\lambda s}{1+2\lambda s}$ with $s=\sin^2\frac{\xi\Delta x}{2}\ge0$, so
+$|G|\le1$ always. It is second order in both $\Delta\tau$ and $\Delta x$.
+
+\Q{The payoff has a kink. Why do you still see second-order convergence?}
+\A The kink's Fourier coefficients decay like $\xi^{-2}$, and the scheme damps the high modes that carry the
+local error, so the global error at positive time is still $O(\Delta x^2)$. Observed order: $\convOrderMax$.
+
+\Q{On a computer you cannot use all of $\R$. What boundary conditions did you use?}
+\A Truncate to $[x_{\min},x_{\max}]$ and impose the asymptotic values: $u\approx0$ far left, and the
+transformed $S-Ke^{-r(T-t)}$ far right. The error from truncation is exponentially small if the domain is
+wide enough.
+
+\Q{What is a PINN and why does it beat the plain network?}
+\A A physics-informed neural network adds $\|V_t+\frac12\sigma^2S^2V_{SS}+rSV_S-rV\|^2$ at many collocation
+points to the loss, computing derivatives by automatic differentiation, plus terminal and boundary terms.
+The PDE supplies information between the few data points, so with $20$ labels it is about
+$\nnRmseRatioTwenty$ times more accurate.
+
+\subsection{Limitations and extensions}
+
+\Q{What assumptions break in real markets?}
+\A Constant $\sigma$ and $r$, continuous paths (no jumps), no transaction costs, continuous hedging, no
+dividends. Real implied volatility depends on $K$ and $T$ (the volatility smile).
+
+\Q{How do dividends change things?}
+\A A continuous dividend yield $q$ changes the drift term to $(r-q)SV_S$. The reduction still works with
+$k$ replaced appropriately, and $S$ in the formula becomes $Se^{-q(T-t)}$.
+
+\Q{What about American options?}
+\A Early exercise gives the constraint $V\ge\max(S-K,0)$ and a free boundary (optimal exercise price). The
+problem becomes an obstacle problem / linear complementarity problem; in heat variables it is the heat
+equation with an obstacle. There is no closed form for the American put.
+
+\Q{What if $\sigma$ depends on $S$ and $t$?}
+\A The log change still works, but the coefficients remain variable, so no exponential factor reduces it to
+the heat equation. One solves it numerically (finite differences, Monte Carlo).
+
+\Q{What if the share price jumps?}
+\A A jump-diffusion model (e.g.\ Merton) adds an integral term, giving a partial integro-differential equation.
+It is no longer a local PDE and the heat-kernel solution does not apply directly.
+
+\subsection{Quick-fire questions}
+\begin{itemize}
+  \item \emph{Units of $\tau$?} Dimensionless ($\sigma^2$ has units 1/time).
+  \item \emph{Value of a call at $S=K$, $t\to T$?} $\to0$, like $S\sigma\sqrt{(T-t)/(2\pi)}$.
+  \item \emph{Is $V$ increasing in $\sigma$?} Yes: Vega $=S\sqrt{T-t}\,\N'(d_1)>0$; more diffusion spreads more
+    mass above $K$.
+  \item \emph{Is $V$ convex in $S$?} Yes, Gamma $V_{SS}=\N'(d_1)/(S\sigma\sqrt{T-t})>0$; convexity of the payoff
+    is preserved by the heat flow.
+  \item \emph{Bounds?} $\max(S-Ke^{-r(T-t)},0)\le V\le S$.
+  \item \emph{Which class tools did you use?} Classification, change of variables to canonical form, separation
+    of variables, Fourier integral and series, fundamental solution, maximum principle, energy method,
+    Hadamard ill-posedness, von Neumann stability.
+\end{itemize}
+
+\end{document}
