@@ -329,7 +329,7 @@
   \]
   \begin{itemize}
     \item The inner integral $I$ does not involve $g$.
-    \item Our $g=u_0$ grows, so this step is formal; the theorem below proves the result directly.
+    \item Our $g=u_0$ grows, so this step is formal; the final formula is checked directly.
   \end{itemize}
   \note{The coefficients A and B are the continuous analogue of Fourier coefficients. After substituting
   them, the two products combine into a single cosine and the problem reduces to one integral I, which
@@ -409,64 +409,13 @@
   is a solution.}
 \end{frame}
 
-\begin{frame}{Theorem: the initial-value problem}
-  \begin{theorem}
-    Let $g$ be continuous with $|g(y)|\le Me^{c|y|}$. Then $u=\Phi(\cdot,\tau)*g$ is $C^\infty$ for $\tau>0$,
-    solves $u_\tau=u_{xx}$, and $u(x,\tau)\to g(x_0)$ as $(x,\tau)\to(x_0,0^+)$.
-  \end{theorem}
-  {\small (Class: $g$ bounded; the Gaussian also beats $e^{c|y|}$, which covers our $u_0$.)}
-  \vspace{2pt}
-
-  \textbf{Proof.} \emph{Smooth, solves:} differentiate under the integral; use (ii), (iii), (v).
-  \emph{Initial value:} fix $\varepsilon$, choose $\delta$ with $|g(y)-g(x_0)|<\varepsilon$ for
-  $|y-x_0|<\delta$. By (iv),
-  {\small
-  \[
-    |u(x,\tau)-g(x_0)|\le\underbrace{\int_{|y-x_0|<\delta}\Phi\,|g(y)-g(x_0)|\dd y}_{I\ \le\ \varepsilon}
-    +\underbrace{\int_{|y-x_0|\ge\delta}\Phi\,|g(y)-g(x_0)|\dd y}_{J}.
-  \]}
-  If $|x-x_0|<\delta/2$ and $|y-x_0|\ge\delta$ then $|x-y|\ge\frac12|y-x_0|$, so
-  {\small
-  \[
-    J\le\int_{|y-x_0|\ge\delta}\frac{e^{-|y-x_0|^2/16\tau}}{\sqrt{4\pi\tau}}\big(|g(y)|+|g(x_0)|\big)\dd y
-    \ \xrightarrow{\ \tau\to0\ }\ 0 . \qquad\square
-  \]}
-  \note{This follows the proof from class: split the integral into a part near x0, small by continuity, and
-  a part far away, small because the kernel concentrates. Our initial data grow exponentially rather than
-  being bounded, but the Gaussian factor still wins, so the same proof applies.}
-\end{frame}
-
 \begin{frame}{Smoothing: the kink melts}
   \centering
   \includegraphics[width=\textwidth]{fig_smoothing.pdf}\\[2pt]
   {\small (a) call value $V$ for several times to expiry \quad (b) the same functions as $u(x,\tau)$}
   \note{Left is the option price as we move away from expiry; right is the same thing in heat coordinates.
   The kinked payoff is an initial temperature profile, and the price today is that temperature after
-  diffusion. By the theorem the solution is smooth for every positive tau.}
-\end{frame}
-
-\begin{frame}{Maximum principle on a bounded domain}
-  Parabolic cylinder $\Omega_T=\Omega\times(0,T]$, \ parabolic boundary
-  $\Gamma_T=\overline{\Omega_T}\setminus\Omega_T$ (bottom and sides).
-  \begin{theorem}[Weak maximum principle]
-    If $u\in C^2_1(\Omega_T)\cap C(\overline{\Omega_T})$ solves $u_\tau=u_{xx}$ in $\Omega_T$, then
-    $\displaystyle\max_{\overline{\Omega_T}}u=\max_{\Gamma_T}u$.
-  \end{theorem}
-  \textbf{Proof.} Let $u^\varepsilon=u-\varepsilon\tau$, so $u^\varepsilon_\tau-u^\varepsilon_{xx}=-\varepsilon<0$.
-  Suppose $u^\varepsilon$ has its maximum at $(x_0,\tau_0)\in\Omega_T$. Then
-  \begin{itemize}
-    \item $u^\varepsilon_{xx}\le0$ (maximum in $x$),
-    \item $u^\varepsilon_\tau=0$ if $\tau_0<T$, and $u^\varepsilon_\tau\ge0$ if $\tau_0=T$,
-  \end{itemize}
-  so $u^\varepsilon_\tau-u^\varepsilon_{xx}\ge0$: a contradiction. Hence
-  \[
-    \max_{\overline{\Omega_T}}u\le\max_{\overline{\Omega_T}}u^\varepsilon+\varepsilon T
-    =\max_{\Gamma_T}u^\varepsilon+\varepsilon T\le\max_{\Gamma_T}u+\varepsilon T\xrightarrow{\varepsilon\to0}\max_{\Gamma_T}u .
-    \quad\square
-  \]
-  \note{The hottest point of the cylinder lies on the parabolic boundary: initially or on the walls, never
-  spontaneously inside or at a later time. Subtracting epsilon tau makes the inequality strict, which gives
-  the contradiction; then we let epsilon go to zero.}
+  diffusion. The solution is smooth for every positive tau.}
 \end{frame}
 
 \begin{frame}{Uniqueness}
